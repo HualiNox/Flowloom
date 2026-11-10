@@ -40,13 +40,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        String requestId = MDC.get(MdcKeys.REQUEST_ID);
-
         log.error(
-                "Unexpected exception: method={}, path={}, requestId={}",
+                "Unexpected exception: method={}, path={}",
                 request.getMethod(),
                 request.getRequestURI(),
-                requestId,
                 ex
         );
 

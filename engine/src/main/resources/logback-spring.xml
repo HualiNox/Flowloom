@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 在包含 requestId 的时候显示标签 -->
+    <property
+            name="LOG_LEVEL_PATTERN"
+            value="%5p%replace(%X{requestId}){'^(.+)$', ' [requestId=$1]'}"/>
+
+    <!-- 复用 Spring Boot 的默认格式和控制台输出配置 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
