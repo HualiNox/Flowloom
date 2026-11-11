@@ -42,13 +42,13 @@ public class RequestIdFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        String traceId = UUID.randomUUID()
+        String requestId = UUID.randomUUID()
                 .toString()
-                .replace("/", "")
+                .replace("-", "")
                 .toUpperCase();
 
         try {
-            MDC.put(MdcKeys.REQUEST_ID, traceId);
+            MDC.put(MdcKeys.REQUEST_ID, requestId);
 
             filterChain.doFilter(request, response);
         } finally {
