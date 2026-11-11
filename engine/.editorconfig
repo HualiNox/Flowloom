@@ -29,9 +29,11 @@ ij_java_keep_blank_lines_in_code = 1
 ij_java_keep_blank_lines_in_declarations = 1
 ij_java_keep_blank_lines_between_imports = false
 
-# Wrapping: keep ordinary declarations and calls compact
-ij_java_keep_line_breaks = false
+# Wrapping: preserve existing line breaks and keep ordinary calls compact
+ij_java_keep_line_breaks = true
 ij_java_wrap_long_lines = false
+ij_java_record_components_wrap = on_every_item
+ij_java_annotation_new_line_in_record_component = true
 ij_java_call_parameters_wrap = off
 ij_java_method_parameters_wrap = off
 ij_java_method_call_chain_wrap = off
