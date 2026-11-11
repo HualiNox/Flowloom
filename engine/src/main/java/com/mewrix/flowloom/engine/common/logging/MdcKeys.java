@@ -10,7 +10,8 @@ package com.mewrix.flowloom.engine.common.logging;
 public class MdcKeys {
 
     // 禁止实例化
-    private MdcKeys() {}
+    private MdcKeys() {
+    }
 
     // 请求ID
     public static final String REQUEST_ID = "requestId";

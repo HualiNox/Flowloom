@@ -41,8 +41,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+            FilterChain filterChain) throws ServletException, IOException {
         String traceId = UUID.randomUUID()
                 .toString()
                 .replace("/", "")

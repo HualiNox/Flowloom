@@ -33,26 +33,38 @@
         <archunit.version>1.5.1</archunit.version>
     </properties>
     <dependencies>
+        <!-- Spring Boot Starter Web Mvc -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
+        <!-- Spring Boot Starter Web Mvc End -->
 
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- Lombok End -->
+
+        <!-- PostgreSQL Runtime Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- PostgreSQL Runtime Driver End -->
+
+        <!-- Test Scope -->
+
+        <!-- Spring Boot Starter Web Mvc Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Spring Boot Starter Web Mvc Test End -->
 
         <!-- ArchUnit -->
         <dependency>
@@ -61,14 +73,20 @@
             <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Test Scope End -->
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Spring Boot Maven Plugin End -->
+
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -105,6 +123,8 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Maven Compiler Plugin End -->
+
         </plugins>
     </build>
 

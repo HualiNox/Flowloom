@@ -1,9 +1,7 @@
 package com.mewrix.flowloom.engine.common.exception;
 
-import com.mewrix.flowloom.engine.common.logging.MdcKeys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -38,19 +36,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleUnexpected(
             Exception ex,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         log.error(
                 "Unexpected exception: method={}, path={}",
                 request.getMethod(),
                 request.getRequestURI(),
-                ex
-        );
+                ex);
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred."
-        );
+                "An unexpected error occurred.");
 
         problem.setTitle("Internal Server Error");
 
