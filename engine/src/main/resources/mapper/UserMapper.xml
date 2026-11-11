@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mewrix.flowloom.engine.user.mapper.UserMapper">
+    <select id="findByUsername" resultType="com.mewrix.flowloom.engine.user.entity.User">
+        SELECT *
+        FROM users
+        WHERE LOWER(username) = LOWER(#{username})
+    </select>
+
+    <select id="findByEmail" resultType="com.mewrix.flowloom.engine.user.entity.User">
+        SELECT *
+        FROM users
+        WHERE LOWER(email) = LOWER(#{email})
+    </select>
+
+    <insert id="insertUser">
+        INSERT INTO users (display_name, username, email, password_hash)
+        VALUES (#{displayName}, #{username}, #{email}, #{passwordHash})
+    </insert>
+</mapper>

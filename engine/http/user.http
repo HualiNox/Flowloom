@@ -1,0 +1,13 @@
+@baseUrl = http://localhost:8080
+
+### 用户注册
+POST {{baseUrl}}/api/v1/user/register
+Accept-Language: en-US
+Content-Type: application/json
+
+{
+    "displayName": "Http Client Test",
+    "username": "http-client-test-user",
+    "email": "http@client.test",
+    "password": "http-client-test-password"
+}
