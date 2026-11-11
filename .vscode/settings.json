@@ -1,0 +1,4 @@
+{
+    "java.format.settings.url": "${workspaceFolder}/engine/eclipse-formatter.xml",
+    "java.format.settings.profile": "Flowloom"
+}
