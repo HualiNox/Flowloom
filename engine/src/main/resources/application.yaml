@@ -4,9 +4,9 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:postgresql://localhost:5432/flowloom
-    username: flowloom
-    password: flowloom
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/flowloom}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
 
     # Hikari
     hikari:
