@@ -27,6 +27,13 @@ spring:
     encoding: UTF-8
     fallback-to-system-locale: false
 
+# Springdoc OpenAPI
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:false}
+  swagger-ui:
+    enabled: ${OPENAPI_ENABLED:false}
+
 # Mybatis Plus
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
