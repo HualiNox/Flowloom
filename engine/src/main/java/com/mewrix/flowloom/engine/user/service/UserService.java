@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
@@ -54,24 +55,13 @@ public class UserService {
             String email,
             String password) {
 
-        UserBusinessCode error = validateUsername(username);
-        if (error != null) {
-            return BusinessResult.fail(error);
-        }
+        BusinessCode code = validateUsername(username)
+                .andThen(() -> validateEmail(email))
+                .andThen(() -> validateDisplayName(displayName))
+                .andThen(() -> validatePassword(password));
 
-        error = validateEmail(email);
-        if (error != null) {
-            return BusinessResult.fail(error);
-        }
-
-        error = validateDisplayName(displayName);
-        if (error != null) {
-            return BusinessResult.fail(error);
-        }
-
-        error = validatePassword(password);
-        if (error != null) {
-            return BusinessResult.fail(error);
+        if (!code.isOk()) {
+            return BusinessResult.fail(code);
         }
 
         // 使用 Argon2id 加密密码
@@ -100,9 +90,9 @@ public class UserService {
     /**
      * 校验用户名格式及其是否已存在。
      *
-     * @return 失败业务码；通过时返回 {@code null}
+     * @return 失败时返回对应用户业务码；通过时返回 {@link BusinessCode#ok()}
      */
-    private UserBusinessCode validateUsername(String username) {
+    private BusinessCode validateUsername(String username) {
         if (username.length() < USERNAME_MIN_LENGTH) {
             return UserBusinessCode.USERNAME_TOO_SHORT;
         }
@@ -118,48 +108,48 @@ public class UserService {
         if (userMapper.findByUsername(username) != null) {
             return UserBusinessCode.USERNAME_ALREADY_EXISTS;
         }
-        return null;
+        return BusinessCode.ok();
     }
 
     /**
      * 校验邮箱格式及其是否已存在。
      *
-     * @return 失败业务码；通过时返回 {@code null}
+     * @return 失败时返回对应用户业务码；通过时返回 {@link BusinessCode#ok()}
      */
-    private UserBusinessCode validateEmail(String email) {
+    private BusinessCode validateEmail(String email) {
         if (!EMAIL_PATTERN.matcher(email).find()) {
             return UserBusinessCode.EMAIL_INVALID;
         }
         if (userMapper.findByEmail(email) != null) {
             return UserBusinessCode.EMAIL_ALREADY_EXISTS;
         }
-        return null;
+        return BusinessCode.ok();
     }
 
     /**
      * 校验展示名不包含控制字符。
      *
-     * @return 失败业务码；通过时返回 {@code null}
+     * @return 失败时返回对应用户业务码；通过时返回 {@link BusinessCode#ok()}
      */
-    private UserBusinessCode validateDisplayName(String displayName) {
+    private BusinessCode validateDisplayName(String displayName) {
         if (INVALID_DISPLAY_NAME_PATTERN.matcher(displayName).find()) {
             return UserBusinessCode.DISPLAY_NAME_INVALID;
         }
-        return null;
+        return BusinessCode.ok();
     }
 
     /**
      * 校验密码长度。
      *
-     * @return 失败业务码；通过时返回 {@code null}
+     * @return 失败时返回对应用户业务码；通过时返回 {@link BusinessCode#ok()}
      */
-    private UserBusinessCode validatePassword(String password) {
+    private BusinessCode validatePassword(String password) {
         if (password.length() < PASSWORD_MIN_LENGTH) {
             return UserBusinessCode.PASSWORD_TOO_SHORT;
         }
         if (password.length() > PASSWORD_MAX_LENGTH) {
             return UserBusinessCode.PASSWORD_TOO_LONG;
         }
-        return null;
+        return BusinessCode.ok();
     }
 }
