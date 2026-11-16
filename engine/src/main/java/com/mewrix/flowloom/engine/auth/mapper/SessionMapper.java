@@ -49,7 +49,27 @@ public interface SessionMapper {
                         @Param("refreshThreshold") LocalDateTime refreshThreshold,
                         @Param("newExpiresAt") LocalDateTime newExpiresAt);
 
+        /**
+         * 删除已过期的会话（{@code expires_at <= now}）。
+         *
+         * @param now 当前业务时间
+         * @return 受影响行数
+         */
         int deleteExpiredSessions(@Param("now") LocalDateTime now);
 
+        /**
+         * 删除已吊销的会话（{@code revoked_at IS NOT NULL}）。
+         *
+         * @return 受影响行数
+         */
+        int deleteRevokedSessions();
+
+        /**
+         * 吊销会话：将 {@code revoked_at} 设为 {@code now}；已吊销则不更新。
+         *
+         * @param tokenHash 凭证 SHA-256 哈希
+         * @param now       吊销时间
+         * @return 受影响行数；未知或已吊销时为 0
+         */
         int revokeSession(@Param("tokenHash") byte[] tokenHash, @Param("now") LocalDateTime now);
 }

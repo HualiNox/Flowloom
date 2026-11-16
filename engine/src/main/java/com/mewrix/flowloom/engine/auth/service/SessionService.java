@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mewrix.flowloom.engine.auth.entity.Session;
 import com.mewrix.flowloom.engine.auth.mapper.SessionMapper;
@@ -95,9 +96,24 @@ public class SessionService {
         return Optional.of(new UserPrincipal(user.getId(), user.getUsername(), user.getEmail()));
     }
 
-    public int deleteExpiredSessions() {
+    /**
+     * 删除已过期与已吊销的会话行。
+     *
+     * <p>
+     * 先按 {@code expires_at} 删除过期记录，再删除 {@code revoked_at} 非空的吊销记录；
+     * 同一行不会被两侧重复计入。调用方应在事务中执行。
+     * </p>
+     *
+     * @return 删除的总行数
+     */
+    @Transactional
+    public int deleteExpiredSessionsAndRevokedSessions() {
         LocalDateTime now = TimeUtil.now();
-        return sessionMapper.deleteExpiredSessions(now);
+
+        int rowsAffected = sessionMapper.deleteExpiredSessions(now);
+        rowsAffected += sessionMapper.deleteRevokedSessions();
+
+        return rowsAffected;
     }
 
     /**

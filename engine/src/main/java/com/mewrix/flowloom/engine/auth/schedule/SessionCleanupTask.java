@@ -30,8 +30,8 @@ public class SessionCleanupTask {
      * @Scheduled 每隔 30 分钟执行一次。
      */
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
-    public void cleanupExpiredSessions() {
-        int deletedCount = sessionService.deleteExpiredSessions();
+    public void cleanupUnvailedSessions() {
+        int deletedCount = sessionService.deleteExpiredSessionsAndRevokedSessions();
 
         if (deletedCount > 0) {
             log.info("Clened up {} expired sessions", deletedCount);
