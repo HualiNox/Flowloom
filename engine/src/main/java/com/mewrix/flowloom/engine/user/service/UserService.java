@@ -1,8 +1,8 @@
 package com.mewrix.flowloom.engine.user.service;
 
-import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.user.dto.response.UserRegisterResponse;
+import com.mewrix.flowloom.engine.user.response.UserBusinessCode;
 import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class UserService {
         }
 
         if (!isValidDisplayName(displayName)) {
-            return BusinessResult.fail(BusinessCode.DISPLAY_NAME_INVALID);
+            return BusinessResult.fail(UserBusinessCode.DISPLAY_NAME_INVALID);
         }
 
         BusinessResult<Void> passwordValidationResult = validatePassword(password);
@@ -86,12 +86,12 @@ public class UserService {
 
         try {
             if (userMapper.insertUser(user) <= 0) {
-                return BusinessResult.fail(BusinessCode.USER_CREATION_FAILED);
+                return BusinessResult.fail(UserBusinessCode.USER_CREATION_FAILED);
             }
         } catch (DataIntegrityViolationException e) {
             // 唯一性预检查与插入之间可能有并发请求，最终由数据库约束保证唯一性
             log.error("Data integrity violation while creating user: {}", e.getMessage());
-            return BusinessResult.fail(BusinessCode.USER_CREATION_FAILED);
+            return BusinessResult.fail(UserBusinessCode.USER_CREATION_FAILED);
         }
 
         return BusinessResult.success();
@@ -100,23 +100,23 @@ public class UserService {
     /** 校验用户名格式及其是否已存在。 */
     private BusinessResult<Void> validateUsername(String username) {
         if (username.length() < USERNAME_MIN_LENGTH) {
-            return BusinessResult.fail(BusinessCode.USERNAME_TOO_SHORT);
+            return BusinessResult.fail(UserBusinessCode.USERNAME_TOO_SHORT);
         }
 
         if (username.length() > USERNAME_MAX_LENGTH) {
-            return BusinessResult.fail(BusinessCode.USERNAME_TOO_LONG);
+            return BusinessResult.fail(UserBusinessCode.USERNAME_TOO_LONG);
         }
 
         if (INVALID_USERNAME_PATTERN.matcher(username).find()) {
-            return BusinessResult.fail(BusinessCode.USERNAME_HAS_ILLEGAL_CHARACTERS);
+            return BusinessResult.fail(UserBusinessCode.USERNAME_HAS_ILLEGAL_CHARACTERS);
         }
 
         if (INVALID_USERNAME_START_PATTERN.matcher(username).find()) {
-            return BusinessResult.fail(BusinessCode.USERNAME_MUST_START_WITH_LETTER);
+            return BusinessResult.fail(UserBusinessCode.USERNAME_MUST_START_WITH_LETTER);
         }
 
         if (userMapper.findByUsername(username) != null) {
-            return BusinessResult.fail(BusinessCode.USERNAME_ALREADY_EXISTS);
+            return BusinessResult.fail(UserBusinessCode.USERNAME_ALREADY_EXISTS);
         }
 
         return BusinessResult.success();
@@ -125,11 +125,11 @@ public class UserService {
     /** 校验邮箱格式及其是否已存在。 */
     private BusinessResult<Void> validateEmail(String email) {
         if (!EMAIL_PATTERN.matcher(email).find()) {
-            return BusinessResult.fail(BusinessCode.EMAIL_INVALID);
+            return BusinessResult.fail(UserBusinessCode.EMAIL_INVALID);
         }
 
         if (userMapper.findByEmail(email) != null) {
-            return BusinessResult.fail(BusinessCode.EMAIL_ALREADY_EXISTS);
+            return BusinessResult.fail(UserBusinessCode.EMAIL_ALREADY_EXISTS);
         }
 
         return BusinessResult.success();
@@ -143,11 +143,11 @@ public class UserService {
     /** 校验密码长度。 */
     private BusinessResult<Void> validatePassword(String password) {
         if (password.length() < PASSWORD_MIN_LENGTH) {
-            return BusinessResult.fail(BusinessCode.PASSWORD_TOO_SHORT);
+            return BusinessResult.fail(UserBusinessCode.PASSWORD_TOO_SHORT);
         }
 
         if (password.length() > PASSWORD_MAX_LENGTH) {
-            return BusinessResult.fail(BusinessCode.PASSWORD_TOO_LONG);
+            return BusinessResult.fail(UserBusinessCode.PASSWORD_TOO_LONG);
         }
 
         return BusinessResult.success();

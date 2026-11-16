@@ -12,7 +12,7 @@ import com.mewrix.flowloom.engine.auth.dto.response.AuthLoginResponse;
 import com.mewrix.flowloom.engine.auth.service.AuthService;
 import com.mewrix.flowloom.engine.common.response.ApiResponse;
 import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
-import com.mewrix.flowloom.engine.common.response.BusinessCode;
+import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.common.util.SessionUtil;
 
@@ -50,7 +50,7 @@ public class AuthController {
     public ApiResponse<Void> logout(HttpServletRequest request) {
         Optional<String> token = SessionUtil.extractBearerToken(request);
         if (token.isEmpty()) {
-            return apiResponseFactory.from(BusinessResult.fail(BusinessCode.AUTH_INVALID_OR_EXPIRED_CREDENTIALS));
+            return apiResponseFactory.from(BusinessResult.fail(AuthBusinessCode.AUTH_INVALID_OR_EXPIRED_CREDENTIALS));
         }
 
         authService.logout(token.get());

@@ -3,6 +3,7 @@ package com.mewrix.flowloom.engine.common.result;
 import java.util.List;
 
 import com.mewrix.flowloom.engine.common.response.BusinessCode;
+import com.mewrix.flowloom.engine.common.response.CommonBusinessCode;
 
 /**
  * BusinessResult类用于封装业务处理结果，包括业务码、消息参数和数据。
@@ -20,19 +21,19 @@ public record BusinessResult<T>(
      * 判断业务处理是否成功
      */
     public boolean isSuccess() {
-        return code == BusinessCode.OK;
+        return code == CommonBusinessCode.OK;
     }
 
     // === 工厂方法 ===
 
     /** 创建包含数据的成功结果。 */
     public static <T> BusinessResult<T> success(T data) {
-        return new BusinessResult<>(BusinessCode.OK, null, data);
+        return new BusinessResult<>(CommonBusinessCode.OK, null, data);
     }
 
     /** 创建不含数据的成功结果。 */
     public static <T> BusinessResult<T> success() {
-        return new BusinessResult<>(BusinessCode.OK, null, null);
+        return new BusinessResult<>(CommonBusinessCode.OK, null, null);
     }
 
     /** 使用指定业务码创建不含消息参数的结果。 */

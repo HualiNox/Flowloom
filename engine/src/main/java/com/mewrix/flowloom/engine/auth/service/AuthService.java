@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.mewrix.flowloom.engine.auth.dto.response.AuthLoginResponse;
 import com.mewrix.flowloom.engine.auth.principal.UserPrincipal;
-import com.mewrix.flowloom.engine.common.response.BusinessCode;
+import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class AuthService {
             authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(usernameOrEmail, password));
         } catch (BadCredentialsException ex) {
-            return BusinessResult.fail(BusinessCode.AUTH_INVALID_CREDENTIALS);
+            return BusinessResult.fail(AuthBusinessCode.AUTH_INVALID_CREDENTIALS);
         }
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

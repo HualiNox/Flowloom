@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.LocaleResolver;
 
 import tools.jackson.databind.ObjectMapper;
+import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
-import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +38,7 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
                 localeResolver,
                 objectMapper,
                 apiResponseFactory.from(
-                        BusinessResult.fail(BusinessCode.AUTH_ACCESS_DENIED)),
+                        BusinessResult.fail(AuthBusinessCode.AUTH_ACCESS_DENIED)),
                 HttpStatus.FORBIDDEN);
     }
 }

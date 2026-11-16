@@ -15,7 +15,7 @@ public record ApiResponse<T>(
     /** 创建带数据及默认英文消息的成功响应。 */
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(
-                BusinessCode.OK.getCode(),
+                CommonBusinessCode.OK.getCode(),
                 "success",
                 data);
     }
@@ -23,7 +23,7 @@ public record ApiResponse<T>(
     /** 创建不含数据、使用默认英文消息的成功响应。 */
     public static <T> ApiResponse<T> success() {
         return new ApiResponse<>(
-                BusinessCode.OK.getCode(),
+                CommonBusinessCode.OK.getCode(),
                 "success",
                 null);
     }
