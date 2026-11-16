@@ -1,8 +1,8 @@
 package com.mewrix.flowloom.engine.common.response;
 
 /**
- * 业务码契约：各业务模块提供自己的枚举实现。
- * 响应中的 {@code code} 取 {@link #getCode()}，消息走 {@link #getMessageKey()} 国际化。
+ * 业务码契约：各业务模块提供自己的枚举实现。 响应中的 {@code code} 取 {@link #getCode()}，消息走
+ * {@link #getMessageKey()} 国际化。
  */
 public interface BusinessCode {
 

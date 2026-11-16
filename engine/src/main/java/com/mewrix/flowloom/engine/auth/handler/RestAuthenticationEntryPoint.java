@@ -18,8 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 未认证访问受保护资源时，返回与业务接口一致的 {@link ApiResponse} JSON，
- * 而不是 Spring Security 默认的空 body。
+ * 未认证访问受保护资源时，返回与业务接口一致的 {@link ApiResponse} JSON， 而不是 Spring Security 默认的空
+ * body。
  */
 @Component
 @RequiredArgsConstructor

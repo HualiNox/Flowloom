@@ -20,8 +20,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 从 {@code Authorization: Bearer <token>} 解析自建会话，并将 {@link UserPrincipal} 写入 SecurityContext。
- * 无凭证或凭证无效时不设置认证信息，交由后续授权规则处理。
+ * 从 {@code Authorization: Bearer <token>} 解析自建会话，并将 {@link UserPrincipal} 写入
+ * SecurityContext。 无凭证或凭证无效时不设置认证信息，交由后续授权规则处理。
  */
 @Component
 @RequiredArgsConstructor

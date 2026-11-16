@@ -5,5 +5,6 @@ package com.mewrix.flowloom.engine.auth.dto.response;
  *
  * @param token 会话凭证，后续请求以 Bearer Token 携带
  */
-public record AuthLoginResponse(String token) {
+public record AuthLoginResponse(
+        String token) {
 }

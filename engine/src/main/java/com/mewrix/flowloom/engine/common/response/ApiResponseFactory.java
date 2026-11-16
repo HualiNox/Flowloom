@@ -21,7 +21,7 @@ public class ApiResponseFactory {
      * 根据当前语言环境解析业务码对应的消息。
      *
      * @param result 业务处理结果
-     * @param <T> 结果数据类型
+     * @param <T>    结果数据类型
      * @return 包含业务码、消息和数据的响应
      */
     public <T> ApiResponse<T> from(BusinessResult<T> result) {

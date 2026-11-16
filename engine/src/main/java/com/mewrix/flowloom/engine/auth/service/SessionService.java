@@ -23,8 +23,7 @@ import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 会话创建、校验与滑动续期。
- * 凭证仅以哈希形式入库，明文 token 只在创建时返回一次。
+ * 会话创建、校验与滑动续期。 凭证仅以哈希形式入库，明文 token 只在创建时返回一次。
  */
 @Service
 @RequiredArgsConstructor
@@ -117,9 +116,8 @@ public class SessionService {
     }
 
     /**
-     * 滑动续期：距上次续期达到 {@link SessionProperties#minRefreshInterval()} 后，
-     * 将过期时间重置为 now + {@link SessionProperties#timeout()}。
-     * 未到间隔则不写库，避免每个请求都更新。
+     * 滑动续期：距上次续期达到 {@link SessionProperties#minRefreshInterval()} 后， 将过期时间重置为 now +
+     * {@link SessionProperties#timeout()}。 未到间隔则不写库，避免每个请求都更新。
      *
      * @param tokenHash 凭证哈希
      * @param now       当前业务时间（{@link TimeUtil#now()}）

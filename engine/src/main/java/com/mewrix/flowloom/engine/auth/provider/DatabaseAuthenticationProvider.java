@@ -17,8 +17,8 @@ import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 基于数据库用户的用户名密码认证。
- * 校验时读取 password_hash，成功后仅将 {@link UserPrincipal} 写入 Authentication。
+ * 基于数据库用户的用户名密码认证。 校验时读取 password_hash，成功后仅将 {@link UserPrincipal} 写入
+ * Authentication。
  */
 @Component
 @RequiredArgsConstructor

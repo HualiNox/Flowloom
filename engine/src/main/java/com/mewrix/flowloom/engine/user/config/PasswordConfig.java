@@ -15,8 +15,7 @@ public class PasswordConfig {
      * 配置密码编码器，使用Argon2算法进行密码加密。
      *
      * <p>
-     * Argon2是一种现代的密码哈希算法，具有高安全性和
-     * 良好的性能。该方法返回一个配置好的Argon2PasswordEncoder实例，
+     * Argon2是一种现代的密码哈希算法，具有高安全性和 良好的性能。该方法返回一个配置好的Argon2PasswordEncoder实例，
      * 可用于对用户密码进行加密和验证。
      * </p>
      *

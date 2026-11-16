@@ -23,8 +23,7 @@ public class SessionCleanupTask {
      * 清理过期会话。
      *
      * <p>
-     * 该任务会在后台定时运行，删除所有已过期的会话记录。
-     * 如果 deletedCount 大于 0，则会在日志中打印清理的会话数量。
+     * 该任务会在后台定时运行，删除所有已过期的会话记录。 如果 deletedCount 大于 0，则会在日志中打印清理的会话数量。
      * </p>
      *
      * @Scheduled 每隔 30 分钟执行一次。

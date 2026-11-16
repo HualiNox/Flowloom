@@ -53,8 +53,8 @@ public class SecurityConfig {
     }
 
     /**
-     * 不使用 Servlet HttpSession 持久化 SecurityContext；
-     * 每个请求由 {@link SessionAuthenticationFilter} 根据自建会话重建认证信息。
+     * 不使用 Servlet HttpSession 持久化 SecurityContext； 每个请求由
+     * {@link SessionAuthenticationFilter} 根据自建会话重建认证信息。
      */
     @Bean
     public SecurityContextRepository securityContextRepository() {

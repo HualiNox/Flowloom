@@ -7,8 +7,7 @@ import java.time.ZoneId;
  * 项目统一时间工具。
  *
  * <p>
- * 业务层写入与比较一律使用 {@link #ZONE_ID} 下的墙钟时间，避免依赖 JVM 默认时区或数据库
- * {@code NOW()}。
+ * 业务层写入与比较一律使用 {@link #ZONE_ID} 下的墙钟时间，避免依赖 JVM 默认时区或数据库 {@code NOW()}。
  */
 public final class TimeUtil {
 

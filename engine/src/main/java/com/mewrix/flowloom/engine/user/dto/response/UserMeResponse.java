@@ -9,5 +9,8 @@ import java.util.UUID;
  * @param username 用户名
  * @param email    用户邮箱
  */
-public record UserMeResponse(UUID userId, String username, String email) {
+public record UserMeResponse(
+        UUID userId,
+        String username,
+        String email) {
 }

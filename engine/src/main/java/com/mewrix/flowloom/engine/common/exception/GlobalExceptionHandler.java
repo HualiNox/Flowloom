@@ -13,8 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * Spring MVC 全局异常处理器
  *
  * <p>
- * 统一处理 Spring MVC 请求异常及未被专用异常处理器处理的异常，
- * 并返回规范化的错误响应。
+ * 统一处理 Spring MVC 请求异常及未被专用异常处理器处理的异常， 并返回规范化的错误响应。
  * </p>
  */
 @RestControllerAdvice
@@ -25,8 +24,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * 处理 Spring MVC 请求处理过程中未被其他异常处理器处理的异常。
      *
      * <p>
-     * 记录异常堆栈及请求信息，并返回统一的 HTTP 500 错误响应，
-     * 避免向客户端暴露内部异常信息。
+     * 记录异常堆栈及请求信息，并返回统一的 HTTP 500 错误响应， 避免向客户端暴露内部异常信息。
      * </p>
      *
      * @param ex      未处理的异常

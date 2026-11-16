@@ -16,13 +16,11 @@ import java.util.UUID;
  * HTTP 请求标识过滤器
  *
  * <p>
- * 在请求进入 Spring MVC 处理链之前生成唯一 RequestId，
- * 将其绑定到 MDC 日志上下文。
+ * 在请求进入 Spring MVC 处理链之前生成唯一 RequestId， 将其绑定到 MDC 日志上下文。
  * </p>
  *
  * <p>
- * 请求处理结束后清理 MDC 中的 RequestId，
- * 避免线程复用导致不同请求之间的上下文污染。
+ * 请求处理结束后清理 MDC 中的 RequestId， 避免线程复用导致不同请求之间的上下文污染。
  * </p>
  */
 @Component

@@ -18,7 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 已认证但无权限时，返回与业务接口一致的 {@link com.mewrix.flowloom.engine.common.response.ApiResponse}。
+ * 已认证但无权限时，返回与业务接口一致的
+ * {@link com.mewrix.flowloom.engine.common.response.ApiResponse}。
  */
 @Component
 @RequiredArgsConstructor
