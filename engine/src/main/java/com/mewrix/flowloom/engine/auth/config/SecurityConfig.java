@@ -10,13 +10,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.NullSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 
 import com.mewrix.flowloom.engine.auth.filter.SessionAuthenticationFilter;
 import com.mewrix.flowloom.engine.auth.handler.RestAccessDeniedHandler;
 import com.mewrix.flowloom.engine.auth.handler.RestAuthenticationEntryPoint;
 import com.mewrix.flowloom.engine.auth.provider.DatabaseAuthenticationProvider;
 
+/**
+ * Spring Security 配置：无状态 API + 自建会话。
+ *
+ * <p>
+ * 不使用 Servlet HttpSession 持久化 {@code SecurityContext}；每个请求由
+ * {@link SessionAuthenticationFilter} 根据 Bearer 凭证重建认证信息。
+ * </p>
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -35,7 +42,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .securityContext(context -> context
-                        .securityContextRepository(securityContextRepository()))
+                        .securityContextRepository(new NullSecurityContextRepository()))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
@@ -50,15 +57,6 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
-    }
-
-    /**
-     * 不使用 Servlet HttpSession 持久化 SecurityContext； 每个请求由
-     * {@link SessionAuthenticationFilter} 根据自建会话重建认证信息。
-     */
-    @Bean
-    public SecurityContextRepository securityContextRepository() {
-        return new NullSecurityContextRepository();
     }
 
     @Bean
