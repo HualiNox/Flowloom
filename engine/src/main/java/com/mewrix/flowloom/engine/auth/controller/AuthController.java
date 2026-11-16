@@ -9,18 +9,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mewrix.flowloom.engine.auth.dto.request.AuthLoginRequest;
 import com.mewrix.flowloom.engine.auth.dto.response.AuthLoginResponse;
+import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.auth.service.AuthService;
 import com.mewrix.flowloom.engine.common.response.ApiResponse;
 import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
-import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.common.util.SessionUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /** 提供认证相关的 HTTP 接口。 */
+@Tag(name = "认证", description = "登录签发会话、注销吊销会话")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -34,6 +38,8 @@ public class AuthController {
      * @param request 登录请求
      * @return 包含业务码与会话 token 的响应
      */
+    @Operation(summary = "用户登录", description = "校验用户名或邮箱与密码，成功时返回会话 token。")
+    @SecurityRequirements
     @PostMapping("/login")
     public ApiResponse<AuthLoginResponse> login(@Valid @RequestBody AuthLoginRequest request) {
         BusinessResult<AuthLoginResponse> result = authService.login(
@@ -46,11 +52,13 @@ public class AuthController {
     /**
      * 吊销当前 Bearer 会话；需已认证。
      */
+    @Operation(summary = "注销登录", description = "吊销当前 Authorization Bearer 对应的会话。")
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletRequest request) {
         Optional<String> token = SessionUtil.extractBearerToken(request);
         if (token.isEmpty()) {
-            return apiResponseFactory.from(BusinessResult.fail(AuthBusinessCode.AUTH_INVALID_OR_EXPIRED_CREDENTIALS));
+            return apiResponseFactory.from(BusinessResult.fail(
+                    AuthBusinessCode.AUTH_INVALID_OR_EXPIRED_CREDENTIALS));
         }
 
         authService.logout(token.get());
