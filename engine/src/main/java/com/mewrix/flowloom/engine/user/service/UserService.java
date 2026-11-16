@@ -1,17 +1,18 @@
 package com.mewrix.flowloom.engine.user.service;
 
-import com.mewrix.flowloom.engine.common.result.BusinessResult;
-import com.mewrix.flowloom.engine.user.response.UserBusinessCode;
-import com.mewrix.flowloom.engine.user.entity.User;
-import com.mewrix.flowloom.engine.user.mapper.UserMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.regex.Pattern;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.regex.Pattern;
+import com.mewrix.flowloom.engine.common.result.BusinessResult;
+import com.mewrix.flowloom.engine.user.entity.User;
+import com.mewrix.flowloom.engine.user.mapper.UserMapper;
+import com.mewrix.flowloom.engine.user.response.UserBusinessCode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /** 处理用户注册及相关业务校验。 */
 @Service
@@ -25,7 +26,8 @@ public class UserService {
     private static final Pattern INVALID_DISPLAY_NAME_PATTERN = Pattern.compile("[\\p{Cc}]");
 
     // 用户邮箱验证正则匹配模式
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
 
     // 用户名格式限制
     private static final int USERNAME_MIN_LENGTH = 4;
@@ -52,28 +54,27 @@ public class UserService {
             String email,
             String password) {
 
-        // 校验用户信息是否合法
-        BusinessResult<Void> validaResult;
-        validaResult = validateUsername(username);
-        if (!validaResult.isSuccess()) {
-            return BusinessResult.fail(validaResult.code());
+        UserBusinessCode error = validateUsername(username);
+        if (error != null) {
+            return BusinessResult.fail(error);
         }
 
-        validaResult = validateEmail(email);
-        if (!validaResult.isSuccess()) {
-            return BusinessResult.fail(validaResult.code());
+        error = validateEmail(email);
+        if (error != null) {
+            return BusinessResult.fail(error);
         }
 
-        if (!isValidDisplayName(displayName)) {
-            return BusinessResult.fail(UserBusinessCode.DISPLAY_NAME_INVALID);
+        error = validateDisplayName(displayName);
+        if (error != null) {
+            return BusinessResult.fail(error);
         }
 
-        BusinessResult<Void> passwordValidationResult = validatePassword(password);
-        if (!passwordValidationResult.isSuccess()) {
-            return BusinessResult.fail(passwordValidationResult.code());
+        error = validatePassword(password);
+        if (error != null) {
+            return BusinessResult.fail(error);
         }
 
-        // 使用`Argon2id`加密密码
+        // 使用 Argon2id 加密密码
         String passwordHash = passwordEncoder.encode(password);
 
         // 主键和时间字段由数据库生成，插入结果表示受影响的行数
@@ -96,59 +97,69 @@ public class UserService {
         return BusinessResult.success();
     }
 
-    /** 校验用户名格式及其是否已存在。 */
-    private BusinessResult<Void> validateUsername(String username) {
+    /**
+     * 校验用户名格式及其是否已存在。
+     *
+     * @return 失败业务码；通过时返回 {@code null}
+     */
+    private UserBusinessCode validateUsername(String username) {
         if (username.length() < USERNAME_MIN_LENGTH) {
-            return BusinessResult.fail(UserBusinessCode.USERNAME_TOO_SHORT);
+            return UserBusinessCode.USERNAME_TOO_SHORT;
         }
-
         if (username.length() > USERNAME_MAX_LENGTH) {
-            return BusinessResult.fail(UserBusinessCode.USERNAME_TOO_LONG);
+            return UserBusinessCode.USERNAME_TOO_LONG;
         }
-
         if (INVALID_USERNAME_PATTERN.matcher(username).find()) {
-            return BusinessResult.fail(UserBusinessCode.USERNAME_HAS_ILLEGAL_CHARACTERS);
+            return UserBusinessCode.USERNAME_HAS_ILLEGAL_CHARACTERS;
         }
-
         if (INVALID_USERNAME_START_PATTERN.matcher(username).find()) {
-            return BusinessResult.fail(UserBusinessCode.USERNAME_MUST_START_WITH_LETTER);
+            return UserBusinessCode.USERNAME_MUST_START_WITH_LETTER;
         }
-
         if (userMapper.findByUsername(username) != null) {
-            return BusinessResult.fail(UserBusinessCode.USERNAME_ALREADY_EXISTS);
+            return UserBusinessCode.USERNAME_ALREADY_EXISTS;
         }
-
-        return BusinessResult.success();
+        return null;
     }
 
-    /** 校验邮箱格式及其是否已存在。 */
-    private BusinessResult<Void> validateEmail(String email) {
+    /**
+     * 校验邮箱格式及其是否已存在。
+     *
+     * @return 失败业务码；通过时返回 {@code null}
+     */
+    private UserBusinessCode validateEmail(String email) {
         if (!EMAIL_PATTERN.matcher(email).find()) {
-            return BusinessResult.fail(UserBusinessCode.EMAIL_INVALID);
+            return UserBusinessCode.EMAIL_INVALID;
         }
-
         if (userMapper.findByEmail(email) != null) {
-            return BusinessResult.fail(UserBusinessCode.EMAIL_ALREADY_EXISTS);
+            return UserBusinessCode.EMAIL_ALREADY_EXISTS;
         }
-
-        return BusinessResult.success();
+        return null;
     }
 
-    /** 判断展示名是否不包含控制字符。 */
-    private static boolean isValidDisplayName(String displayName) {
-        return !INVALID_DISPLAY_NAME_PATTERN.matcher(displayName).find();
+    /**
+     * 校验展示名不包含控制字符。
+     *
+     * @return 失败业务码；通过时返回 {@code null}
+     */
+    private UserBusinessCode validateDisplayName(String displayName) {
+        if (INVALID_DISPLAY_NAME_PATTERN.matcher(displayName).find()) {
+            return UserBusinessCode.DISPLAY_NAME_INVALID;
+        }
+        return null;
     }
 
-    /** 校验密码长度。 */
-    private BusinessResult<Void> validatePassword(String password) {
+    /**
+     * 校验密码长度。
+     *
+     * @return 失败业务码；通过时返回 {@code null}
+     */
+    private UserBusinessCode validatePassword(String password) {
         if (password.length() < PASSWORD_MIN_LENGTH) {
-            return BusinessResult.fail(UserBusinessCode.PASSWORD_TOO_SHORT);
+            return UserBusinessCode.PASSWORD_TOO_SHORT;
         }
-
         if (password.length() > PASSWORD_MAX_LENGTH) {
-            return BusinessResult.fail(UserBusinessCode.PASSWORD_TOO_LONG);
+            return UserBusinessCode.PASSWORD_TOO_LONG;
         }
-
-        return BusinessResult.success();
+        return null;
     }
 }
