@@ -1,21 +1,25 @@
 package com.mewrix.flowloom.engine.user.controller;
 
+import java.util.Locale;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.mewrix.flowloom.engine.auth.principal.UserPrincipal;
 import com.mewrix.flowloom.engine.common.response.ApiResponse;
 import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.user.dto.request.UserRegisterRequest;
+import com.mewrix.flowloom.engine.user.dto.response.UserMeResponse;
 import com.mewrix.flowloom.engine.user.dto.response.UserRegisterResponse;
 import com.mewrix.flowloom.engine.user.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Locale;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /** 提供用户相关的 HTTP 接口。 */
 @RestController
@@ -44,5 +48,14 @@ public class UserController {
                 request.password());
 
         return apiResponseFactory.from(res);
+    }
+
+    /**
+     * 返回当前登录用户；需携带有效 Bearer 凭证。
+     */
+    @GetMapping("/me")
+    public ApiResponse<UserMeResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
+        return apiResponseFactory.from(BusinessResult.success(
+                new UserMeResponse(principal.userId(), principal.username(), principal.email())));
     }
 }
