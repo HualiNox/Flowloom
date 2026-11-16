@@ -58,6 +58,13 @@
         </dependency>
         <!-- Spring Boot Starter Validation END -->
 
+        <!-- Spring Boot Starter Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- Spring Boot Starter Security END -->
+
         <!-- PostgreSQL Runtime Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>

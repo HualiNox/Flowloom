@@ -42,9 +42,22 @@ public enum BusinessCode {
     PASSWORD_TOO_LONG("user.password_too_long"),
 
     // 用户创建失败
-    USER_CREATION_FAILED("user.creation_failed");
+    USER_CREATION_FAILED("user.creation_failed"),
 
     // === 用户相关业务码 END ===
+
+    // === 认证相关业务码 ===
+
+    // 用户名或密码错误
+    AUTH_INVALID_CREDENTIALS("auth.invalid_credentials"),
+
+    // 认证凭证无效或已过期
+    AUTH_INVALID_OR_EXPIRED_CREDENTIALS("auth.invalid_or_expired_credentials"),
+
+    // 已认证但无权访问
+    AUTH_ACCESS_DENIED("auth.access_denied");
+
+    // === 认证相关业务码 END ===
 
     // 业务码对应的消息 Key
     private final String messageKey;
