@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.mewrix.flowloom.engine.auth.entity.Session;
 import com.mewrix.flowloom.engine.auth.mapper.SessionMapper;
@@ -45,8 +44,13 @@ public class SessionService {
     /**
      * 为指定用户创建会话。
      *
+     * <p>
+     * 入库失败时抛出 {@link IllegalStateException}；成功时直接返回明文凭证，
+     * 由调用方下发，服务端不再保存明文。
+     * </p>
+     *
      * @param userId 用户 ID
-     * @return 明文会话凭证；调用方负责下发，服务端不再保存明文
+     * @return 明文会话凭证
      */
     public String createSession(UUID userId) {
         Session session = new Session();
@@ -96,23 +100,12 @@ public class SessionService {
     }
 
     /**
-     * 删除已过期与已吊销的会话行。
+     * 删除无效会话行（已过期或已吊销）。
      *
-     * <p>
-     * 先按 {@code expires_at} 删除过期记录，再删除 {@code revoked_at} 非空的吊销记录；
-     * 同一行不会被两侧重复计入。调用方应在事务中执行。
-     * </p>
-     *
-     * @return 删除的总行数
+     * @return 删除的行数
      */
-    @Transactional
-    public int deleteExpiredSessionsAndRevokedSessions() {
-        LocalDateTime now = TimeUtil.now();
-
-        int rowsAffected = sessionMapper.deleteExpiredSessions(now);
-        rowsAffected += sessionMapper.deleteRevokedSessions();
-
-        return rowsAffected;
+    public int deleteInvalidSessions() {
+        return sessionMapper.deleteInvalidSessions(TimeUtil.now());
     }
 
     /**

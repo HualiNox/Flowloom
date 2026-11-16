@@ -50,19 +50,12 @@ public interface SessionMapper {
             @Param("newExpiresAt") LocalDateTime newExpiresAt);
 
     /**
-     * 删除已过期的会话（{@code expires_at <= now}）。
+     * 删除已过期或已吊销的会话（{@code expires_at <= now} 或 {@code revoked_at IS NOT NULL}）。
      *
      * @param now 当前业务时间
      * @return 受影响行数
      */
-    int deleteExpiredSessions(@Param("now") LocalDateTime now);
-
-    /**
-     * 删除已吊销的会话（{@code revoked_at IS NOT NULL}）。
-     *
-     * @return 受影响行数
-     */
-    int deleteRevokedSessions();
+    int deleteInvalidSessions(@Param("now") LocalDateTime now);
 
     /**
      * 吊销会话：将 {@code revoked_at} 设为 {@code now}；已吊销则不更新。
