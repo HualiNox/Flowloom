@@ -23,9 +23,10 @@ public class AuthService {
     /**
      * 校验凭据并为用户创建会话。
      *
-     * @param usernameOrEmail 用户名
+     * @param usernameOrEmail 用户名或邮箱
      * @param password        明文密码
-     * @return 成功时包含会话 token；凭据错误时返回失败业务码
+     * @return 成功时包含会话 token；凭据错误时返回失败业务码。
+     *         会话创建失败时向上抛出异常，不包装为业务失败码
      */
     public BusinessResult<AuthLoginResponse> login(String usernameOrEmail, String password) {
         final Authentication authentication;
