@@ -1,12 +1,18 @@
 package com.mewrix.flowloom.engine.user.mapper;
 
-import com.mewrix.flowloom.engine.user.entity.User;
+import java.util.UUID;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import com.mewrix.flowloom.engine.user.entity.User;
 
 /** 用户记录的数据库访问接口。 */
 @Mapper
 public interface UserMapper {
+
+    /** 按主键查询用户；不存在时返回 null。 */
+    User findById(@Param("id") UUID id);
 
     /** 按用户名查询用户，忽略大小写；不存在时返回 null。 */
     User findByUsername(@Param("username") String username);

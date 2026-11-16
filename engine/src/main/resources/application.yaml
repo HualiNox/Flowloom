@@ -33,3 +33,9 @@ mybatis-plus:
   type-handlers-package: com.mewrix.flowloom.engine.common.persistence
   configuration:
     map-underscore-to-camel-case: true
+
+# 会话：有效期与滑动续期最小间隔（业务时间统一为 Asia/Shanghai）
+flowloom:
+  session:
+    timeout: 2h
+    min-refresh-interval: 30m

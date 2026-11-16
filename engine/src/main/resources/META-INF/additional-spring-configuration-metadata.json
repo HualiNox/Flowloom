@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "flowloom.session.timeout",
+      "type": "java.time.Duration",
+      "description": "会话有效期。创建或滑动续期后，expires_at = now + timeout。必须大于 min-refresh-interval。"
+    },
+    {
+      "name": "flowloom.session.min-refresh-interval",
+      "type": "java.time.Duration",
+      "description": "滑动续期最小间隔。未满该间隔不更新 expires_at。必须小于 timeout。"
+    }
+  ]
+}
