@@ -15,7 +15,6 @@ import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.user.dto.request.UserRegisterRequest;
 import com.mewrix.flowloom.engine.user.dto.response.UserMeResponse;
-import com.mewrix.flowloom.engine.user.dto.response.UserRegisterResponse;
 import com.mewrix.flowloom.engine.user.service.UserService;
 
 import jakarta.validation.Valid;
@@ -33,15 +32,15 @@ public class UserController {
      * 校验注册请求并返回用户注册结果。
      *
      * @param request 用户注册信息
-     * @param locale 当前请求的语言环境
+     * @param locale  当前请求的语言环境
      * @return 包含业务码和本地化消息的响应
      */
     @PostMapping("/register")
-    public ApiResponse<UserRegisterResponse> register(
+    public ApiResponse<Void> register(
             @Valid @RequestBody UserRegisterRequest request,
             Locale locale) {
 
-        BusinessResult<UserRegisterResponse> res = userService.register(
+        BusinessResult<Void> res = userService.register(
                 request.displayName(),
                 request.username(),
                 request.email(),

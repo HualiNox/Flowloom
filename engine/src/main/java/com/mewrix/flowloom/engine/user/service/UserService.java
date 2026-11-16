@@ -1,7 +1,6 @@
 package com.mewrix.flowloom.engine.user.service;
 
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
-import com.mewrix.flowloom.engine.user.dto.response.UserRegisterResponse;
 import com.mewrix.flowloom.engine.user.response.UserBusinessCode;
 import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
@@ -47,7 +46,7 @@ public class UserService {
      * @param password    明文密码，仅用于生成密码哈希
      * @return 注册结果；当前成功结果不包含数据
      */
-    public BusinessResult<UserRegisterResponse> register(
+    public BusinessResult<Void> register(
             String displayName,
             String username,
             String email,
