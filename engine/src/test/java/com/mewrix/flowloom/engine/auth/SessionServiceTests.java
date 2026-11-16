@@ -21,6 +21,8 @@ import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -53,9 +55,10 @@ class SessionServiceTests {
     void createSessionPersistsHashNotPlainToken() {
         when(sessionMapper.insert(any(Session.class))).thenReturn(1);
 
-        Optional<String> token = sessionService.createSession(USER_ID);
+        String token = sessionService.createSession(USER_ID);
 
-        assertTrue(token.isPresent());
+        assertNotNull(token);
+        assertFalse(token.isEmpty());
         ArgumentCaptor<Session> captor = ArgumentCaptor.forClass(Session.class);
         verify(sessionMapper).insert(captor.capture());
         Session saved = captor.getValue();
@@ -66,7 +69,7 @@ class SessionServiceTests {
     @Test
     void findValidPrincipalReturnsUserWhenSessionActive() {
         when(sessionMapper.insert(any(Session.class))).thenReturn(1);
-        String token = sessionService.createSession(USER_ID).orElseThrow();
+        String token = sessionService.createSession(USER_ID);
 
         Session active = new Session();
         active.setUserId(USER_ID);
@@ -102,7 +105,7 @@ class SessionServiceTests {
     @Test
     void revokeSessionHashesTokenBeforeUpdate() {
         when(sessionMapper.insert(any(Session.class))).thenReturn(1);
-        String token = sessionService.createSession(USER_ID).orElseThrow();
+        String token = sessionService.createSession(USER_ID);
 
         sessionService.revokeSession(token);
 

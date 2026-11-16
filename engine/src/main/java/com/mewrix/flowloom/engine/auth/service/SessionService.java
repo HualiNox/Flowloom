@@ -48,7 +48,7 @@ public class SessionService {
      * @param userId 用户 ID
      * @return 明文会话凭证；调用方负责下发，服务端不再保存明文
      */
-    public Optional<String> createSession(UUID userId) {
+    public String createSession(UUID userId) {
         Session session = new Session();
         session.setUserId(userId);
 
@@ -65,7 +65,7 @@ public class SessionService {
             throw new IllegalStateException("Failed to create session for user: " + userId);
         }
 
-        return Optional.of(token);
+        return token;
     }
 
     /**

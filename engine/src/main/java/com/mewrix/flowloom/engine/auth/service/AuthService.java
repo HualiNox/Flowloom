@@ -37,9 +37,7 @@ public class AuthService {
         }
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        String token = sessionService.createSession(principal.userId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Failed to create session for user: " + principal.userId()));
+        String token = sessionService.createSession(principal.userId());
 
         return BusinessResult.success(new AuthLoginResponse(token));
     }
