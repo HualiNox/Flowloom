@@ -16,7 +16,13 @@ public enum AuthBusinessCode implements BusinessCode {
     AUTH_INVALID_OR_EXPIRED_CREDENTIALS("auth.invalid_or_expired_credentials"),
 
     // 已认证但无权访问
-    AUTH_ACCESS_DENIED("auth.access_denied");
+    AUTH_ACCESS_DENIED("auth.access_denied"),
+
+    // Redis 会话 key 缺失或已过期（Lua 返回 -2 / null）
+    AUTH_GET_KEY_FAILED("auth.get_key_failed"),
+
+    // Redis 会话 key 无 TTL 的异常状态（Lua 返回 -1，脚本侧已 DEL）
+    AUTH_KEY_TTL_EXCEPTION("auth.key_ttl_exception");
 
     private final String messageKey;
 

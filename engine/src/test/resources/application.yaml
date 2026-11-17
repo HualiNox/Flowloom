@@ -1,0 +1,6 @@
+# 测试加载仓库根或模块旁的 .env，使 ${REDIS_*} / ${DATABASE_*} 等占位符可解析。
+spring:
+  config:
+    import:
+      - optional:file:../.env[.properties]
+      - optional:file:.env[.properties]

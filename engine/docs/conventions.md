@@ -13,3 +13,13 @@ HTTP 状态码由控制器或统一处理机制显式指定，用于表达 HTTP 
 `RequestIdFilter` 为进入过滤器的 HTTP 请求生成请求 ID，并将其放入当前线程的 MDC，键名为 `requestId`。过滤器链执行结束后会清除该键，避免线程复用时残留上下文。
 
 当前全局异常处理器会在记录未预期异常时读取并记录请求 ID。MDC 是线程上下文；在异步任务或其他线程中不能假定该值会自动传递。
+
+## 会话存储（Redis）
+
+用户会话存放在 Redis，不再使用 PostgreSQL `sessions` 表。
+
+- 会话 key：`flowloom:session:{sha256(token)}`，值为 `userId`，TTL 由 `flowloom.session.timeout` 控制
+- 用户索引：`flowloom:user:{userId}:sessions`（SET），用于按用户吊销全部会话
+- 滑动续期：`redis/session-touch.lua`（`TTL` + 条件 `EXPIRE`）
+
+Redis ACL 至少需要：`+get +set +del +expire +ttl +sadd +srem +smembers +eval +evalsha`，key 模式覆盖 `~flowloom:*`。

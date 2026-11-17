@@ -27,6 +27,17 @@ spring:
     encoding: UTF-8
     fallback-to-system-locale: false
 
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 3s
+      connect-timeout: 3s
+
 # Springdoc OpenAPI
 springdoc:
   api-docs:
@@ -41,7 +52,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 
-# 会话：有效期与滑动续期最小间隔（业务时间统一为 Asia/Shanghai）
+# 会话：Redis TTL 与滑动续期最小间隔
 flowloom:
   session:
     timeout: 2h

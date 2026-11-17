@@ -12,8 +12,8 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 会话相关配置，对应 {@code flowloom.session.*}。
  *
- * @param timeout            会话有效期；创建与每次滑动续期后，过期时间为 now + timeout
- * @param minRefreshInterval 滑动续期的最小间隔；未满该间隔不写库
+ * @param timeout            会话有效期；创建与每次滑动续期后，Redis TTL 重置为该时长
+ * @param minRefreshInterval 滑动续期的最小间隔；未满该间隔不刷新 Redis TTL
  */
 @Validated
 @ConfigurationProperties(prefix = "flowloom.session")

@@ -65,6 +65,20 @@
         </dependency>
         <!-- Spring Boot Starter Security END -->
 
+        <!-- Spring Boot Starter Data Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <classifier>osx-aarch_64</classifier>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Spring Boot Starter Data Redis END -->
+
         <!-- PostgreSQL Runtime Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>

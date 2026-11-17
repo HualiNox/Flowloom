@@ -4,76 +4,107 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HexFormat;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
-import com.mewrix.flowloom.engine.auth.entity.Session;
-import com.mewrix.flowloom.engine.auth.mapper.SessionMapper;
 import com.mewrix.flowloom.engine.auth.principal.UserPrincipal;
 import com.mewrix.flowloom.engine.auth.properties.SessionProperties;
-import com.mewrix.flowloom.engine.common.util.TimeUtil;
+import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
+import com.mewrix.flowloom.engine.common.response.BusinessCode;
+import com.mewrix.flowloom.engine.common.response.CommonBusinessCode;
 import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * 会话创建、校验与滑动续期。 凭证仅以哈希形式入库，明文 token 只在创建时返回一次。
+ * 会话创建、校验与滑动续期。
+ *
+ * <p>存储模型：
+ * <ul>
+ *   <li>{@code flowloom:session:{sha256(token)}} → {@code userId}，带 TTL</li>
+ *   <li>{@code flowloom:user:{userId}:sessions} → 会话 key 集合，用于按用户批量吊销</li>
+ * </ul>
+ * 明文 token 只在创建时返回一次；Redis 中仅保存哈希后的 key。
+ * </p>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SessionService {
-    private final SessionMapper sessionMapper;
     private final UserMapper userMapper;
     private final SessionProperties sessionProperties;
+    private final StringRedisTemplate redisTemplate;
 
-    /**
-     * 用于生成会话凭证的安全随机源。
-     */
+    /** 用于生成会话凭证的安全随机源。 */
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    /**
-     * 凭证入库前使用的哈希算法。
-     */
+    /** 凭证写入 Redis 前使用的哈希算法。 */
     private static final String HASH_ALGORITHM = "SHA-256";
+
+    /** 会话 key 前缀：{@code flowloom:session:{sha256hex}}。 */
+    private static final String KEY_PREFIX = "flowloom:session:";
+
+    /** 用户会话索引前缀：{@code flowloom:user:{userId}:sessions}。 */
+    private static final String USER_SESSIONS_PREFIX = "flowloom:user:";
+
+    private static final String USER_SESSIONS_SUFFIX = ":sessions";
+
+    /** 会话滑动续期的 Lua 脚本（原子 TTL 检查 + 条件 EXPIRE）。 */
+    private static final RedisScript<Long> SESSION_TOUCH_SCRIPT = RedisScript.of(
+            new ClassPathResource("redis/session-touch.lua"),
+            Long.class);
 
     /**
      * 为指定用户创建会话。
      *
      * <p>
-     * 入库失败时抛出 {@link IllegalStateException}；成功时直接返回明文凭证，
-     * 由调用方下发，服务端不再保存明文。
+     * 使用 {@code SET NX} 写入会话 key，并将该 key 记入用户索引集合。
+     * 哈希碰撞时最多重试 3 次；仍失败则抛出 {@link IllegalStateException}。
+     * 成功时返回明文凭证，由调用方下发，服务端不再保存明文。
      * </p>
      *
      * @param userId 用户 ID
      * @return 明文会话凭证
      */
     public String createSession(UUID userId) {
-        Session session = new Session();
-        session.setUserId(userId);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            String token = generateToken();
+            String key = sessionKey(token);
 
-        LocalDateTime now = TimeUtil.now();
+            Boolean created = redisTemplate.opsForValue()
+                    .setIfAbsent(
+                            key,
+                            userId.toString(),
+                            sessionProperties.timeout());
 
-        String token = generateToken();
-        byte[] tokenHash = hashToken(token);
-        session.setTokenHash(tokenHash);
-        session.setCreatedAt(now);
-        session.setExpiresAt(now.plus(sessionProperties.timeout()));
-
-        int rowsAffected = sessionMapper.insert(session);
-        if (rowsAffected != 1) {
-            throw new IllegalStateException("Failed to create session for user: " + userId);
+            if (Boolean.TRUE.equals(created)) {
+                // 索引无独立 TTL；成员会在会话自然过期后残留，revokeAll 时 DEL 缺失 key 即可
+                redisTemplate.opsForSet().add(userSessionsKey(userId), key);
+                return token;
+            }
         }
 
-        return token;
+        throw new IllegalStateException("Failed to create session after 3 attempts");
     }
 
     /**
      * 查找有效会话对应的用户身份；有效时按配置尝试滑动续期。
+     *
+     * <p>
+     * 值损坏（非 UUID）或对应用户已不存在时，删除孤儿会话 key（及索引成员），
+     * 避免脏数据继续占用 Redis。
+     * </p>
      *
      * @param token 明文会话凭证
      * @return 用户身份；凭证无效、已过期或已吊销时为空
@@ -83,48 +114,40 @@ public class SessionService {
             return Optional.empty();
         }
 
-        LocalDateTime now = TimeUtil.now();
-        byte[] tokenHash = hashToken(token);
-        Session session = sessionMapper.findValidSessionByHash(tokenHash, now);
-        if (session == null) {
+        String key = sessionKey(token);
+        String userIdString = redisTemplate.opsForValue().get(key);
+
+        if (userIdString == null) {
             return Optional.empty();
         }
 
-        User user = userMapper.findById(session.getUserId());
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdString);
+        } catch (IllegalArgumentException ex) {
+            redisTemplate.delete(key);
+            return Optional.empty();
+        }
+
+        User user = userMapper.findById(userId);
         if (user == null) {
+            removeSessionKey(key, userId);
             return Optional.empty();
         }
 
-        touchSession(tokenHash, now);
+        BusinessCode code = touchSession(key);
+        if (!code.isOk()) {
+            if (code == AuthBusinessCode.AUTH_KEY_TTL_EXCEPTION) {
+                log.warn("Session key TTL exception: {}", key);
+            }
+            return Optional.empty();
+        }
+
         return Optional.of(new UserPrincipal(user.getId(), user.getUsername(), user.getEmail()));
     }
 
     /**
-     * 删除无效会话行（已过期或已吊销）。
-     *
-     * @return 删除的行数
-     */
-    public int deleteInvalidSessions() {
-        return sessionMapper.deleteInvalidSessions(TimeUtil.now());
-    }
-
-    /**
-     * 滑动续期：距上次续期达到 {@link SessionProperties#minRefreshInterval()} 后， 将过期时间重置为 now +
-     * {@link SessionProperties#timeout()}。 未到间隔则不写库，避免每个请求都更新。
-     *
-     * @param tokenHash 凭证哈希
-     * @param now       当前业务时间（{@link TimeUtil#now()}）
-     */
-    private void touchSession(byte[] tokenHash, LocalDateTime now) {
-        LocalDateTime newExpiresAt = now.plus(sessionProperties.timeout());
-        // refreshThreshold = now + timeout - minRefreshInterval
-        LocalDateTime refreshThreshold = newExpiresAt.minus(sessionProperties.minRefreshInterval());
-
-        sessionMapper.extendExpiryIfDue(tokenHash, now, refreshThreshold, newExpiresAt);
-    }
-
-    /**
-     * 吊销会话。对未知或已吊销凭证保持幂等，不向外抛错。
+     * 吊销单个会话。对未知或已吊销凭证保持幂等，不向外抛错。
      *
      * @param token 明文会话凭证
      */
@@ -133,9 +156,96 @@ public class SessionService {
             return;
         }
 
-        LocalDateTime now = TimeUtil.now();
-        byte[] tokenHash = hashToken(token);
-        sessionMapper.revokeSession(tokenHash, now);
+        String key = sessionKey(token);
+        String userIdString = redisTemplate.opsForValue().get(key);
+        redisTemplate.delete(key);
+
+        if (userIdString == null) {
+            return;
+        }
+
+        try {
+            redisTemplate.opsForSet().remove(userSessionsKey(UUID.fromString(userIdString)), key);
+        } catch (IllegalArgumentException ignored) {
+            // 损坏的 userId 值已随 key 删除
+        }
+    }
+
+    /**
+     * 吊销指定用户的全部会话（例如改密、强制下线）。
+     *
+     * @param userId 用户 ID
+     */
+    public void revokeAllUserSessions(UUID userId) {
+        if (userId == null) {
+            return;
+        }
+
+        String indexKey = userSessionsKey(userId);
+        Set<String> sessionKeys = redisTemplate.opsForSet().members(indexKey);
+        if (sessionKeys != null && !sessionKeys.isEmpty()) {
+            redisTemplate.delete(sessionKeys);
+        }
+        redisTemplate.delete(indexKey);
+    }
+
+    /** 删除会话 key，并从用户索引中移除。 */
+    private void removeSessionKey(String key, UUID userId) {
+        redisTemplate.delete(key);
+        redisTemplate.opsForSet().remove(userSessionsKey(userId), key);
+    }
+
+    /** 将明文 token 映射为 Redis 会话 key（SHA-256 hex）。 */
+    private static String sessionKey(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return KEY_PREFIX + HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** 用户会话索引 key。 */
+    private static String userSessionsKey(UUID userId) {
+        return USER_SESSIONS_PREFIX + userId + USER_SESSIONS_SUFFIX;
+    }
+
+    /**
+     * 滑动续期：剩余 TTL 不大于 {@code timeout - minRefreshInterval} 时，将 TTL 重置为
+     * {@link SessionProperties#timeout()}。未到间隔则不写 Redis，避免每个请求都更新。
+     *
+     * <p>
+     * {@link StringRedisTemplate} 使用 {@code StringRedisSerializer} 序列化脚本 ARGV，
+     * 因此阈值与超时必须传 {@link String}（不能传 {@code Long}），否则会
+     * {@link ClassCastException}。脚本内再 {@code tonumber(ARGV[n])}。
+     * </p>
+     *
+     * @param key 会话 Redis key
+     * @return 续期结果业务码；{@code -2}/null 表示 key 缺失，{@code -1} 表示无 TTL 异常
+     */
+    private BusinessCode touchSession(String key) {
+        long threshold = sessionProperties.timeout().minus(
+                sessionProperties.minRefreshInterval())
+                .getSeconds();
+
+        long timeout = sessionProperties.timeout().getSeconds();
+
+        Long result = redisTemplate.execute(
+                SESSION_TOUCH_SCRIPT,
+                Collections.singletonList(key),
+                String.valueOf(threshold),
+                String.valueOf(timeout));
+
+        if (result == null || result == -2) {
+            return AuthBusinessCode.AUTH_GET_KEY_FAILED;
+        }
+
+        if (result == -1) {
+            return AuthBusinessCode.AUTH_KEY_TTL_EXCEPTION;
+        }
+
+        return CommonBusinessCode.OK;
     }
 
     /**
@@ -149,21 +259,4 @@ public class SessionService {
                 .withoutPadding()
                 .encodeToString(bytes);
     }
-
-    /**
-     * 对明文凭证做 SHA-256，得到入库用的哈希。
-     *
-     * @param token 明文凭证
-     * @return 哈希值
-     */
-    private static byte[] hashToken(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
-
-            return digest.digest(token.getBytes(StandardCharsets.UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
 }
