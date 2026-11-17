@@ -17,3 +17,18 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/user/me
 Accept-Language: en-US
 Authorization: Bearer {{token}}
+
+### 发送邮箱验证码（未验证用户可访问）
+POST {{baseUrl}}/api/v1/user/email/verify/send
+Accept-Language: zh-CN
+Authorization: Bearer {{token}}
+
+### 校验邮箱验证码
+POST {{baseUrl}}/api/v1/user/email/verify
+Accept-Language: zh-CN
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "code": "123456"
+}

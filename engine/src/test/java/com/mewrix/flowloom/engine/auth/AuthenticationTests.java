@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
 
 import com.mewrix.flowloom.engine.auth.config.SecurityConfig;
+import com.mewrix.flowloom.engine.auth.filter.EmailVerificationFilter;
 import com.mewrix.flowloom.engine.auth.filter.SessionAuthenticationFilter;
 import com.mewrix.flowloom.engine.auth.handler.RestAccessDeniedHandler;
 import com.mewrix.flowloom.engine.auth.handler.RestAuthenticationEntryPoint;
@@ -123,6 +124,11 @@ class AuthenticationTests {
                     throw new UnsupportedOperationException();
                 }
 
+                @Override
+                public int markEmailVerified(UUID id, java.time.LocalDateTime verifiedAt) {
+                    throw new UnsupportedOperationException();
+                }
+
                 private static User alice(String passwordHash) {
                     User user = new User();
                     user.setId(USER_ID);
@@ -138,6 +144,11 @@ class AuthenticationTests {
         @Bean
         SessionService sessionService() {
             return Mockito.mock(SessionService.class);
+        }
+
+        @Bean
+        EmailVerificationFilter emailVerificationFilter() {
+            return Mockito.mock(EmailVerificationFilter.class);
         }
 
         @Bean

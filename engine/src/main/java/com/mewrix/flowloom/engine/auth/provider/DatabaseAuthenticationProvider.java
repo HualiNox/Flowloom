@@ -44,7 +44,12 @@ public class DatabaseAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        UserPrincipal principal = new UserPrincipal(user.getId(), user.getUsername(), user.getEmail());
+        // 登录认证不因邮箱未验证失败；验证状态写入 principal，由过滤器限制后续业务范围
+        UserPrincipal principal = new UserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getEmailVerifiedAt() != null);
         return UsernamePasswordAuthenticationToken.authenticated(principal, null, List.of());
     }
 

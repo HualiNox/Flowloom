@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.NullSecurityContextRepository;
 
+import com.mewrix.flowloom.engine.auth.filter.EmailVerificationFilter;
 import com.mewrix.flowloom.engine.auth.filter.SessionAuthenticationFilter;
 import com.mewrix.flowloom.engine.auth.handler.RestAccessDeniedHandler;
 import com.mewrix.flowloom.engine.auth.handler.RestAuthenticationEntryPoint;
@@ -25,7 +26,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>
  * 不使用 Servlet HttpSession 持久化 {@code SecurityContext}；每个请求由
- * {@link SessionAuthenticationFilter} 根据 Bearer 凭证重建认证信息。
+ * {@link SessionAuthenticationFilter} 根据 Bearer 凭证重建认证信息，
+ * 随后 {@link EmailVerificationFilter} 限制未验证邮箱用户的业务范围。
  * </p>
  */
 @Configuration
@@ -49,6 +51,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity httpSecurity,
             SessionAuthenticationFilter sessionAuthenticationFilter,
+            EmailVerificationFilter emailVerificationFilter,
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler) {
         // 禁用 Spring Security 默认的表单登录、HTTP Basic、CSRF、Logout 等功能
@@ -90,9 +93,13 @@ public class SecurityConfig {
                     auth
                             .anyRequest().authenticated();
                 })
+                // 先解析 Bearer 会话，再按邮箱验证状态限制业务接口
                 .addFilterBefore(
                         sessionAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(
+                        emailVerificationFilter,
+                        SessionAuthenticationFilter.class);
 
         return httpSecurity.build();
     }

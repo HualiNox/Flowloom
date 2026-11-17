@@ -23,3 +23,18 @@ HTTP 状态码由控制器或统一处理机制显式指定，用于表达 HTTP 
 - 滑动续期：`redis/session-touch.lua`（`TTL` + 条件 `EXPIRE`）
 
 Redis ACL 至少需要：`+get +set +del +expire +ttl +sadd +srem +smembers +eval +evalsha`，key 模式覆盖 `~flowloom:*`。
+
+## 邮箱未验证访问范围
+
+未验证邮箱的用户可以登录并获得会话 token。`EmailVerificationFilter` 在会话认证之后限制其业务范围：
+
+- 允许：`/api/v1/user/email/verify/send`、`/api/v1/user/email/verify`、`/api/v1/auth/logout`（以及登录/注册，避免误拦）
+- 其余已认证业务接口返回业务码 `EMAIL_NOT_VERIFIED`（HTTP 403），由前端引导至验证流程
+
+## 邮箱验证
+
+- `POST /api/v1/user/email/verify/send`：向当前用户发 6 位验证码；冷却键按 `userId`（非 IP）
+- `POST /api/v1/user/email/verify`：校验验证码并写入 `email_verified_at`
+- Redis：`flowloom:email-verify:code:{userId}`（值 `code:attempts`）、`flowloom:email-verify:cooldown:{userId}`
+- 配置：`flowloom.mail.verification.code-ttl` / `resend-interval` / `max-attempts`
+- 失败重试会读剩余 TTL，需 ACL 允许 `PTTL`（以及已有的 `TTL`）

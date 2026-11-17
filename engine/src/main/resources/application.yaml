@@ -38,6 +38,23 @@ spring:
       timeout: 3s
       connect-timeout: 3s
 
+  # Mail
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: ${MAIL_PROTOCOL:smtps}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 # Springdoc OpenAPI
 springdoc:
   api-docs:
@@ -57,3 +74,9 @@ flowloom:
   session:
     timeout: 2h
     min-refresh-interval: 30m
+  mail:
+    enable: true
+    verification:
+      code-ttl: 10m
+      resend-interval: 60s
+      max-attempts: 5

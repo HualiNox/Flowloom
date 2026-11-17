@@ -143,7 +143,12 @@ public class SessionService {
             return Optional.empty();
         }
 
-        return Optional.of(new UserPrincipal(user.getId(), user.getUsername(), user.getEmail()));
+        // emailVerified 随用户行加载，供 EmailVerificationFilter 使用
+        return Optional.of(new UserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getEmailVerifiedAt() != null));
     }
 
     /**

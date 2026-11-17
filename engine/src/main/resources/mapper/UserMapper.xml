@@ -26,4 +26,12 @@
         INSERT INTO users (display_name, username, email, password_hash)
         VALUES (#{displayName}, #{username}, #{email}, #{passwordHash})
     </insert>
+
+    <update id="markEmailVerified">
+        UPDATE users
+        SET email_verified_at = #{verifiedAt},
+            updated_at = #{verifiedAt}
+        WHERE id = #{id}
+          AND email_verified_at IS NULL
+    </update>
 </mapper>

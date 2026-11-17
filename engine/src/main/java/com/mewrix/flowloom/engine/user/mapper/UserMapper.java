@@ -1,5 +1,6 @@
 package com.mewrix.flowloom.engine.user.mapper;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -27,4 +28,13 @@ public interface UserMapper {
      * @return 受影响的行数；此方法不会将生成的主键写回实体
      */
     int insertUser(User user);
+
+    /**
+     * 将用户标记为邮箱已验证（仅当尚未验证时更新）。
+     *
+     * @param id         用户 ID
+     * @param verifiedAt 验证完成时间（业务时区）
+     * @return 受影响的行数；已验证或用户不存在时为 0
+     */
+    int markEmailVerified(@Param("id") UUID id, @Param("verifiedAt") LocalDateTime verifiedAt);
 }

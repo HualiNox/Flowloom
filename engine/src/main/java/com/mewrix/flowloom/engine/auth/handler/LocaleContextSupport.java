@@ -14,11 +14,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /** Security 过滤器阶段写 JSON 响应时的 locale / 序列化辅助。 */
-final class LocaleContextSupport {
+public final class LocaleContextSupport {
     private LocaleContextSupport() {
     }
 
-    static void writeJson(
+    public static void writeJson(
             HttpServletRequest request,
             HttpServletResponse response,
             LocaleResolver localeResolver,
