@@ -22,7 +22,7 @@ HTTP 状态码由控制器或统一处理机制显式指定，用于表达 HTTP 
 - 用户索引：`flowloom:user:{userId}:sessions`（SET），用于按用户吊销全部会话
 - 滑动续期：`redis/session-touch.lua`（`TTL` + 条件 `EXPIRE`）
 
-Redis ACL 至少需要：`+get +set +del +expire +ttl +sadd +srem +smembers +eval +evalsha`，key 模式覆盖 `~flowloom:*`。
+Redis ACL 至少需要：`+get +set +del +expire +ttl +pttl +sadd +srem +smembers +eval +evalsha`，key 模式覆盖 `~flowloom:*`。
 
 ## 邮箱未验证访问范围
 
@@ -33,8 +33,9 @@ Redis ACL 至少需要：`+get +set +del +expire +ttl +sadd +srem +smembers +eva
 
 ## 邮箱验证
 
-- `POST /api/v1/user/email/verify/send`：向当前用户发 6 位验证码；冷却键按 `userId`（非 IP）
+- `POST /api/v1/user/email/verify/send`：发送 6 位验证码；冷却按 `userId`
 - `POST /api/v1/user/email/verify`：校验验证码并写入 `email_verified_at`
-- Redis：`flowloom:email-verify:code:{userId}`（值 `code:attempts`）、`flowloom:email-verify:cooldown:{userId}`
+- Redis：`flowloom:email-verify:code:{userId}`（`code:attempts`）、`flowloom:email-verify:cooldown:{userId}`
 - 配置：`flowloom.mail.verification.code-ttl` / `resend-interval` / `max-attempts`
-- 失败重试会读剩余 TTL，需 ACL 允许 `PTTL`（以及已有的 `TTL`）
+- 更新 attempts 时读取剩余 TTL，ACL 需 `PTTL`
+- 邮件：Thymeleaf 模版 `mail/templates/email-verify.html`；`#{...}` + Locale 做中英文；优先 HTML，附带纯文本

@@ -72,6 +72,13 @@
         </dependency>
         <!-- Spring Boot Starter Mail END -->
 
+        <!-- Spring Boot Starter Thymeleaf（邮件 HTML 模版） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <!-- Spring Boot Starter Thymeleaf END -->
+
         <!-- Spring Boot Starter Data Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

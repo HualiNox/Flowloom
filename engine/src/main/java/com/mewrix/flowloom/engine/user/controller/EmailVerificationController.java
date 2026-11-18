@@ -19,13 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 邮箱验证接口：发信与校验。
- *
- * <p>
- * 需已登录；未验证用户由 {@code EmailVerificationFilter} 放行本控制器路径。
- * </p>
- */
+/** 邮箱验证接口；需登录，未验证用户由 EmailVerificationFilter 放行。 */
 @Tag(name = "邮箱验证", description = "发送与校验邮箱验证码")
 @RestController
 @RequestMapping("/api/v1/user/email/verify")
@@ -34,9 +28,6 @@ public class EmailVerificationController {
     private final EmailVerificationService emailVerificationService;
     private final ApiResponseFactory apiResponseFactory;
 
-    /**
-     * 向当前用户邮箱发送验证码；按 userId 限流。
-     */
     @Operation(summary = "发送邮箱验证码", description = "向当前登录用户邮箱发送验证码。冷却按用户 ID 限制。")
     @PostMapping("/send")
     public ApiResponse<Void> sendVerificationCode(
@@ -46,9 +37,6 @@ public class EmailVerificationController {
                 emailVerificationService.sendVerificationCode(principal, locale));
     }
 
-    /**
-     * 校验验证码并标记邮箱已验证。
-     */
     @Operation(summary = "校验邮箱验证码", description = "校验邮件验证码；成功后写入 email_verified_at。")
     @PostMapping
     public ApiResponse<Void> verifyEmail(

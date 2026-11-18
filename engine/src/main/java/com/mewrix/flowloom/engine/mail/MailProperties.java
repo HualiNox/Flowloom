@@ -12,10 +12,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * 邮件相关配置，对应 {@code flowloom.mail.*}。
+ * {@code flowloom.mail.*}
  *
- * @param enable       是否启用业务邮件发送
- * @param verification 邮箱验证码相关配置
+ * @param enable       是否投递业务邮件
+ * @param verification 验证码相关参数
  */
 @Validated
 @ConfigurationProperties(prefix = "flowloom.mail")
@@ -24,11 +24,9 @@ public record MailProperties(
         @NotNull @Valid Verification verification) {
 
     /**
-     * 邮箱验证码配置。
-     *
-     * @param codeTtl         验证码有效期
-     * @param resendInterval  同一用户两次发信的最小间隔（按 userId 限流）
-     * @param maxAttempts     同一验证码最大错误尝试次数
+     * @param codeTtl        验证码有效期
+     * @param resendInterval 同一用户再次发信的最小间隔
+     * @param maxAttempts    同一验证码错误次数上限
      */
     public record Verification(
             @NotNull @DurationMin(nanos = 1) Duration codeTtl,

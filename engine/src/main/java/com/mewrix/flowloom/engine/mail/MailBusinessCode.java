@@ -5,6 +5,7 @@ import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/** 邮件模块业务码。 */
 @Getter
 @RequiredArgsConstructor
 public enum MailBusinessCode implements BusinessCode {
@@ -17,5 +18,4 @@ public enum MailBusinessCode implements BusinessCode {
     public String getCode() {
         return name();
     }
-
 }

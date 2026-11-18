@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -18,17 +19,17 @@ import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import com.mewrix.flowloom.engine.common.util.TimeUtil;
 import com.mewrix.flowloom.engine.mail.MailProperties;
 import com.mewrix.flowloom.engine.mail.MailService;
+import com.mewrix.flowloom.engine.mail.MailTemplateService;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 import com.mewrix.flowloom.engine.user.response.UserBusinessCode;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 邮箱验证：发信、校验与落库。
+ * 邮箱验证：发码、校验并写入 {@code email_verified_at}。
  *
  * <p>
- * 验证码与发信冷却均按 {@code userId} 存于 Redis，避免按 IP 限流误伤共享出口用户。
- * 登录不要求已验证；验证状态由 {@code email_verified_at} 与过滤器共同约束业务范围。
+ * 验证码与冷却按 userId 存 Redis。HTML 使用模版 {@code email-verify}，文案由 {@code #{...}} 与 Locale 解析。
  * </p>
  */
 @Service
@@ -37,21 +38,17 @@ public class EmailVerificationService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String CODE_KEY_PREFIX = "flowloom:email-verify:code:";
     private static final String COOLDOWN_KEY_PREFIX = "flowloom:email-verify:cooldown:";
+    private static final String VERIFY_TEMPLATE = "email-verify";
 
     private final UserMapper userMapper;
     private final MailService mailService;
+    private final MailTemplateService mailTemplateService;
     private final MailProperties mailProperties;
     private final StringRedisTemplate redisTemplate;
     private final MessageSource messageSource;
 
     /**
-     * 向当前用户邮箱发送验证码。
-     *
-     * <p>
-     * 已验证直接返回 {@link UserBusinessCode#EMAIL_ALREADY_VERIFIED}；
-     * 冷却期内返回 {@link UserBusinessCode#EMAIL_VERIFY_TOO_FREQUENT}。
-     * 限流维度为 userId，不使用 IP。
-     * </p>
+     * 发送验证码。已验证或冷却未结束时返回对应业务码；发信失败会删除验证码并保留冷却。
      */
     public BusinessResult<Void> sendVerificationCode(UserPrincipal principal, Locale locale) {
         if (principal.emailVerified()) {
@@ -76,15 +73,18 @@ public class EmailVerificationService {
         long minutes = Math.max(1, mailProperties.verification().codeTtl().toMinutes());
         String subject = messageSource.getMessage(
                 "user.email_verify.mail_subject", null, locale);
-        String body = messageSource.getMessage(
+        String plainText = messageSource.getMessage(
                 "user.email_verify.mail_body",
                 new Object[] { code, minutes },
                 locale);
+        String htmlText = mailTemplateService.renderHtml(VERIFY_TEMPLATE, locale, Map.of(
+                "username", principal.username(),
+                "code", code,
+                "minutes", minutes));
 
         BusinessCode sendResult = mailService.sendEmail(
-                principal.email(), subject, body, false);
+                principal.email(), subject, plainText, htmlText);
         if (!sendResult.isOk()) {
-            // 发信失败时清掉验证码，保留冷却，避免被刷信
             redisTemplate.delete(codeKey(principal.userId()));
             return BusinessResult.fail(sendResult);
         }
@@ -93,11 +93,7 @@ public class EmailVerificationService {
     }
 
     /**
-     * 校验验证码并写入 {@code email_verified_at}。
-     *
-     * <p>
-     * 成功后删除 Redis 中的验证码与冷却键；下一请求重建 principal 时即为已验证。
-     * </p>
+     * 校验验证码。成功后清除 Redis 键并更新 {@code email_verified_at}；错误次数达上限则作废验证码。
      */
     public BusinessResult<Void> verifyEmail(UserPrincipal principal, String code) {
         if (principal.emailVerified()) {
@@ -139,14 +135,13 @@ public class EmailVerificationService {
         redisTemplate.delete(cooldownKey(principal.userId()));
 
         if (updated <= 0) {
-            // 并发下可能已被其他请求验证
             return BusinessResult.fail(UserBusinessCode.EMAIL_ALREADY_VERIFIED);
         }
 
         return BusinessResult.success();
     }
 
-    /** 读取 key 剩余 TTL；依赖 Redis {@code PTTL} 权限。 */
+    /** 需 Redis {@code PTTL}。 */
     private Duration remainingTtl(String key) {
         Long seconds = redisTemplate.getExpire(key, TimeUnit.SECONDS);
         if (seconds == null || seconds < 0) {

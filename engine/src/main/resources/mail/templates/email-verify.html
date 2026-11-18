@@ -1,0 +1,109 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.toLanguageTag()}">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title th:text="#{user.email_verify.mail_subject}">Flowloom</title>
+    </head>
+    <body
+        style="
+            margin: 0;
+            padding: 0;
+            background: #f4f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;PingFang SC&quot;,
+                &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, Roboto, Helvetica, Arial, sans-serif;
+            color: #1f2937;
+        "
+    >
+        <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="background: #f4f5f7; padding: 32px 12px"
+        >
+            <tr>
+                <td align="center">
+                    <table
+                        role="presentation"
+                        width="100%"
+                        cellspacing="0"
+                        cellpadding="0"
+                        style="max-width: 520px; background: #ffffff; border-radius: 12px; overflow: hidden"
+                    >
+                        <tr>
+                            <td
+                                style="
+                                    padding: 28px 32px 8px;
+                                    font-size: 20px;
+                                    font-weight: 600;
+                                    letter-spacing: 0.02em;
+                                "
+                            >
+                                Flowloom
+                            </td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 32px 0; font-size: 16px; line-height: 1.7"
+                                th:text="#{user.email_verify.mail_greeting(${username})}"
+                            >
+                                Hi,
+                            </td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 16px 32px 0; font-size: 15px; line-height: 1.7; color: #4b5563"
+                                th:text="#{user.email_verify.mail_intro}"
+                            >
+                                Use the verification code below.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 28px 32px">
+                                <div
+                                    style="
+                                        display: inline-block;
+                                        padding: 14px 28px;
+                                        border-radius: 10px;
+                                        background: #111827;
+                                        color: #ffffff;
+                                        font-size: 28px;
+                                        font-weight: 700;
+                                        letter-spacing: 0.35em;
+                                    "
+                                    th:text="${code}"
+                                >
+                                    000000
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 0 32px 28px; font-size: 14px; line-height: 1.7; color: #6b7280"
+                                th:text="#{user.email_verify.mail_expiry(${minutes})}"
+                            >
+                                This code will expire soon.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="
+                                    padding: 0 32px 28px;
+                                    font-size: 13px;
+                                    line-height: 1.7;
+                                    color: #9ca3af;
+                                    border-top: 1px solid #e5e7eb;
+                                "
+                            >
+                                <div style="padding-top: 20px" th:text="#{user.email_verify.mail_footer}">
+                                    Flowloom
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
