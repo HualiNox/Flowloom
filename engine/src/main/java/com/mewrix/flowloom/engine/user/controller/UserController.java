@@ -17,14 +17,10 @@ import com.mewrix.flowloom.engine.user.dto.request.UserRegisterRequest;
 import com.mewrix.flowloom.engine.user.dto.response.UserMeResponse;
 import com.mewrix.flowloom.engine.user.service.UserService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /** 提供用户相关的 HTTP 接口。 */
-@Tag(name = "用户", description = "用户注册与当前用户信息")
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
@@ -39,8 +35,6 @@ public class UserController {
      * @param locale  当前请求的语言环境
      * @return 包含业务码和本地化消息的响应
      */
-    @Operation(summary = "用户注册", description = "创建新用户账户。成功时 data 为空。")
-    @SecurityRequirements
     @PostMapping("/register")
     public ApiResponse<Void> register(
             @Valid @RequestBody UserRegisterRequest request,
@@ -58,7 +52,6 @@ public class UserController {
     /**
      * 返回当前登录用户；需携带有效 Bearer 凭证。
      */
-    @Operation(summary = "当前用户", description = "返回当前会话对应用户的基本信息。")
     @GetMapping("/me")
     public ApiResponse<UserMeResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
         return apiResponseFactory.from(BusinessResult.success(

@@ -5,8 +5,6 @@ import com.mewrix.flowloom.engine.auth.principal.UserPrincipal;
 import com.mewrix.flowloom.engine.common.response.ApiResponse;
 import com.mewrix.flowloom.engine.common.response.ApiResponseFactory;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 /** Agent 挂起注册与挑战交换接口。 */
-@Tag(name = "Agent", description = "Agent 挂起注册")
 @RestController
 @RequestMapping("/api/v1/agent")
 @RequiredArgsConstructor
@@ -41,8 +38,6 @@ public class AgentController {
      * @param userPrincipal 当前会话用户
      * @return {@code registrationId || psk}（Base64URL）与过期时间
      */
-    @Operation(summary = "创建 Agent 注册", description = "签发短时注册凭证（registrationId + PSK）。" +
-            "同一用户同时仅允许一个挂起注册；再次请求会使旧凭证失效。")
     @PostMapping("/registration")
     public ApiResponse<AgentRegistrationResponse> createRegistration(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -54,12 +49,11 @@ public class AgentController {
      * 使用挂起注册凭证交换挑战。
      *
      * @param registrationIdString Base64URL 编码的 8 字节注册 ID
-     * @param requestBody 32 字节原始 AgentChallenge
+     * @param requestBody          32 字节原始 AgentChallenge
      * @return 60 字节二进制服务端证明，格式为 ServerChallenge、nonce、tag 依次拼接
      * @throws IOException 请求体读取失败
      */
-    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE,
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> register(
             @RequestHeader("X-Agent-Registration") String registrationIdString,
             InputStream requestBody) throws IOException {

@@ -1,9 +1,7 @@
 package com.mewrix.flowloom.engine.auth.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,8 +17,6 @@ import com.mewrix.flowloom.engine.auth.handler.RestAccessDeniedHandler;
 import com.mewrix.flowloom.engine.auth.handler.RestAuthenticationEntryPoint;
 import com.mewrix.flowloom.engine.auth.provider.DatabaseAuthenticationProvider;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * Spring Security 配置：无状态 API + 自建会话。
  *
@@ -32,20 +28,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    @Value("${springdoc.api-docs.enabled:false}")
-    private boolean enableApiDocs;
-
-    @Value("${springdoc.swagger-ui.enabled:false}")
-    private boolean enableSwaggerUi;
-
-    private final Environment environment;
-
-    private boolean enableOpenApiDocs() {
-        return (enableApiDocs || enableSwaggerUi) && !environment.matchesProfiles("prod");
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -71,17 +54,6 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> {
-                    // OpenAPI
-                    if (enableOpenApiDocs()) {
-                        auth
-                                .requestMatchers(
-                                        "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/v3/api-docs/**",
-                                        "/v3/api-docs")
-                                .permitAll();
-                    }
-
                     // 放行非认证业务接口
                     auth
                             .requestMatchers(
