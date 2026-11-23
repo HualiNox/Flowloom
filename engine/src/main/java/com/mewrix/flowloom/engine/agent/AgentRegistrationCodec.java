@@ -1,7 +1,7 @@
 package com.mewrix.flowloom.engine.agent;
 
+import com.mewrix.flowloom.engine.common.util.CryptoUtil;
 import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -19,8 +19,6 @@ public final class AgentRegistrationCodec {
     private AgentRegistrationCodec() {
     }
 
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
     private static final int UUID_SIZE = 16;
 
     /** 预共享密钥长度（字节）。 */
@@ -31,18 +29,12 @@ public final class AgentRegistrationCodec {
 
     /** 为一次挂起注册生成随机预共享密钥。 */
     public static byte[] generatePsk() {
-        return generateRandomBytes(PSK_SIZE);
+        return CryptoUtil.randomBytes(PSK_SIZE);
     }
 
     /** 生成注册 ID，唯一性由 Redis 中的挂起注册键校验。 */
     public static byte[] generateRegistrationId() {
-        return generateRandomBytes(REGISTRATION_ID_SIZE);
-    }
-
-    private static byte[] generateRandomBytes(int size) {
-        byte[] data = new byte[size];
-        SECURE_RANDOM.nextBytes(data);
-        return data;
+        return CryptoUtil.randomBytes(REGISTRATION_ID_SIZE);
     }
 
     /**

@@ -1,12 +1,8 @@
 package com.mewrix.flowloom.engine.auth.service;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HexFormat;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -21,6 +17,7 @@ import com.mewrix.flowloom.engine.auth.properties.SessionProperties;
 import com.mewrix.flowloom.engine.auth.response.AuthBusinessCode;
 import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import com.mewrix.flowloom.engine.common.response.CommonBusinessCode;
+import com.mewrix.flowloom.engine.common.util.CryptoUtil;
 import com.mewrix.flowloom.engine.user.entity.User;
 import com.mewrix.flowloom.engine.user.mapper.UserMapper;
 
@@ -45,12 +42,6 @@ public class SessionService {
     private final UserMapper userMapper;
     private final SessionProperties sessionProperties;
     private final StringRedisTemplate redisTemplate;
-
-    /** 用于生成会话凭证的安全随机源。 */
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
-    /** 凭证写入 Redis 前使用的哈希算法。 */
-    private static final String HASH_ALGORITHM = "SHA-256";
 
     /** 会话 key 前缀：{@code flowloom:session:{sha256hex}}。 */
     private static final String KEY_PREFIX = "flowloom:session:";
@@ -202,13 +193,7 @@ public class SessionService {
 
     /** 将明文 token 映射为 Redis 会话 key（SHA-256 hex）。 */
     private static String sessionKey(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
-            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            return KEY_PREFIX + HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        return KEY_PREFIX + CryptoUtil.sha256Hex(token.getBytes(StandardCharsets.UTF_8));
     }
 
     /** 用户会话索引 key。 */
@@ -257,8 +242,7 @@ public class SessionService {
      * 生成 32 字节随机凭证，并以 URL-safe Base64（无 padding）编码。
      */
     private static String generateToken() {
-        byte[] bytes = new byte[32];
-        SECURE_RANDOM.nextBytes(bytes);
+        byte[] bytes = CryptoUtil.randomBytes(32);
 
         return Base64.getUrlEncoder()
                 .withoutPadding()

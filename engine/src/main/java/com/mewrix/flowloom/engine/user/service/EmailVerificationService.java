@@ -1,8 +1,5 @@
 package com.mewrix.flowloom.engine.user.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
@@ -16,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.mewrix.flowloom.engine.auth.principal.UserPrincipal;
 import com.mewrix.flowloom.engine.common.response.BusinessCode;
 import com.mewrix.flowloom.engine.common.result.BusinessResult;
+import com.mewrix.flowloom.engine.common.util.CryptoUtil;
 import com.mewrix.flowloom.engine.common.util.TimeUtil;
 import com.mewrix.flowloom.engine.mail.MailProperties;
 import com.mewrix.flowloom.engine.mail.MailService;
@@ -35,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EmailVerificationService {
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String CODE_KEY_PREFIX = "flowloom:email-verify:code:";
     private static final String COOLDOWN_KEY_PREFIX = "flowloom:email-verify:cooldown:";
     private static final String VERIFY_TEMPLATE = "email-verify";
@@ -112,7 +109,7 @@ public class EmailVerificationService {
             return BusinessResult.fail(UserBusinessCode.EMAIL_VERIFY_CODE_INVALID);
         }
 
-        if (!constantTimeEquals(parsed.code(), code)) {
+        if (!CryptoUtil.constantTimeEquals(parsed.code(), code)) {
             int attempts = parsed.attempts() + 1;
             if (attempts >= mailProperties.verification().maxAttempts()) {
                 redisTemplate.delete(key);
@@ -151,7 +148,7 @@ public class EmailVerificationService {
     }
 
     private static String generateCode() {
-        int value = SECURE_RANDOM.nextInt(1_000_000);
+        int value = CryptoUtil.randomInt(1_000_000);
         return String.format("%06d", value);
     }
 
@@ -171,12 +168,6 @@ public class EmailVerificationService {
         } catch (NumberFormatException ex) {
             return null;
         }
-    }
-
-    private static boolean constantTimeEquals(String left, String right) {
-        byte[] a = left.getBytes(StandardCharsets.UTF_8);
-        byte[] b = right.getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(a, b);
     }
 
     private static String codeKey(UUID userId) {

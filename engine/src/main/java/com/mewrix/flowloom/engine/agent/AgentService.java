@@ -3,13 +3,11 @@ package com.mewrix.flowloom.engine.agent;
 import com.mewrix.flowloom.engine.agent.AgentRegistrationCodec.RegistrationCredential;
 import com.mewrix.flowloom.engine.agent.AgentRegistrationCodec.RegistrationRecord;
 import com.mewrix.flowloom.engine.agent.dto.response.AgentRegistrationResponse;
+import com.mewrix.flowloom.engine.common.util.CryptoUtil;
 import com.mewrix.flowloom.engine.common.util.TimeUtil;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +35,6 @@ import org.springframework.stereotype.Service;
 public class AgentService {
 
     private final RedisTemplate<String, byte[]> redisTemplate;
-
-    private static final String HASH_ALGORITHM = "SHA-256";
 
     private static final String REGISTRATION_KEY_PREFIX = "flowloom:agent:registration:";
 
@@ -101,12 +97,7 @@ public class AgentService {
 
     /** 注册键由固定前缀和注册 ID 的 SHA-256 小写十六进制摘要拼接而成。 */
     private static String registrationKey(byte[] registrationId) {
-        try {
-            byte[] hash = MessageDigest.getInstance(HASH_ALGORITHM).digest(registrationId);
-            return REGISTRATION_KEY_PREFIX + HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Failed to hash registration ID", e);
-        }
+        return REGISTRATION_KEY_PREFIX + CryptoUtil.sha256Hex(registrationId);
     }
 
     /** {@code flowloom:agent:registration:user:{userId}}，用于保证每用户仅一个挂起注册。 */
