@@ -44,9 +44,9 @@ public class EmailVerificationFilter extends OncePerRequestFilter {
      * 未验证邮箱仍可访问的路径。
      *
      * <ul>
-     *   <li>验证发信 / 校验：未验证用户的业务入口</li>
-     *   <li>注销：允许结束受限会话</li>
-     *   <li>登录 / 注册：公开接口，避免请求误带 Bearer 时被本过滤器误拦</li>
+     * <li>验证发信 / 校验：未验证用户的业务入口</li>
+     * <li>注销：允许结束受限会话</li>
+     * <li>登录 / 注册：公开接口，避免请求误带 Bearer 时被本过滤器误拦</li>
      * </ul>
      */
     private static final List<String> UNVERIFIED_ALLOWED_PATTERNS = List.of(
@@ -55,6 +55,10 @@ public class EmailVerificationFilter extends OncePerRequestFilter {
             "/api/v1/auth/logout",
             "/api/v1/auth/login",
             "/api/v1/user/register");
+
+    /** 挑战交换依赖临时注册凭证，请求附带未验证的用户会话时也允许进入接口。 */
+    private static final List<String> AGENT_ALLOWED_LIST = List.of(
+            "/api/v1/agent/register");
 
     private final ApiResponseFactory apiResponseFactory;
     private final ObjectMapper objectMapper;
@@ -76,7 +80,7 @@ public class EmailVerificationFilter extends OncePerRequestFilter {
         }
 
         // 已验证，或命中白名单：放行
-        if (principal.emailVerified() || isAllowedForUnverified(request.getRequestURI())) {
+        if (principal.emailVerified() || isAllowedForUnverified(request)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -92,7 +96,15 @@ public class EmailVerificationFilter extends OncePerRequestFilter {
     }
 
     /** 判断请求路径是否对未验证用户开放。 */
-    private static boolean isAllowedForUnverified(String requestUri) {
+    private static boolean isAllowedForUnverified(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+
+        for (String pattern : AGENT_ALLOWED_LIST) {
+            if (PATH_MATCHER.match(pattern, requestUri)) {
+                return true;
+            }
+        }
+
         for (String pattern : UNVERIFIED_ALLOWED_PATTERNS) {
             if (PATH_MATCHER.match(pattern, requestUri)) {
                 return true;

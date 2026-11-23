@@ -8,12 +8,20 @@ import com.mewrix.flowloom.engine.common.result.BusinessResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
+
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
-/** Agent 挂起注册接口，需已认证且邮箱已验证。 */
+/** Agent 挂起注册与挑战交换接口。 */
 @Tag(name = "Agent", description = "Agent 挂起注册")
 @RestController
 @RequestMapping("/api/v1/agent")
@@ -41,4 +49,30 @@ public class AgentController {
         AgentRegistrationResponse result = agentService.createRegistration(userPrincipal.userId());
         return apiResponseFactory.from(BusinessResult.success(result));
     }
+
+    /**
+     * 使用挂起注册凭证交换挑战。
+     *
+     * @param registrationIdString Base64URL 编码的 8 字节注册 ID
+     * @param requestBody 32 字节原始 AgentChallenge
+     * @return 60 字节二进制服务端证明，格式为 ServerChallenge、nonce、tag 依次拼接
+     * @throws IOException 请求体读取失败
+     */
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> register(
+            @RequestHeader("X-Agent-Registration") String registrationIdString,
+            InputStream requestBody) throws IOException {
+        byte[] registrationId;
+        try {
+            registrationId = Base64.getUrlDecoder().decode(registrationIdString);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        // 多读一字节即可识别超长请求，无需缓冲整个请求体。
+        byte[] serverProof = agentService.register(registrationId,
+                requestBody.readNBytes(AgentService.CHALLENGE_BYTES + 1));
+        return serverProof == null ? ResponseEntity.badRequest().build() : ResponseEntity.ok(serverProof);
+    }
+
 }

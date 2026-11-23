@@ -89,6 +89,11 @@ public class SecurityConfig {
                                     "/api/v1/auth/login")
                             .permitAll();
 
+                    // Agent 使用临时注册凭证交换挑战，签发凭证的接口仍要求用户会话。
+                    auth
+                            .requestMatchers("/api/v1/agent/register")
+                            .permitAll();
+
                     // 其余接口需认证
                     auth
                             .anyRequest().authenticated();

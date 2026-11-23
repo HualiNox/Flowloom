@@ -3,12 +3,13 @@
 --
 -- KEYS[1] = Registration KEY          flowloom:agent:registration:{hex(sha256(registrationId))}
 -- KEYS[2] = User → Registration KEY   flowloom:agent:registration:user:{userId}
+-- KEYS[3] = Owner → User KEY          flowloom:agent:registration:owner:{hex(sha256(registrationId))}
 -- ARGV[1] = RegistrationRecord 字节   userId (16) || psk (16)
 -- ARGV[2] = TTL（秒，十进制字符串）
 --
 -- 返回值:
 --   1  成功
---  -1  Registration KEY 已存在（registrationId 碰撞）
+--  -1  Registration KEY 或 Owner KEY 已存在（registrationId 碰撞）
 --  -2  非法 TTL（<=0 或非整数）
 
 local ttl = tonumber(ARGV[2])
@@ -18,8 +19,8 @@ if not ttl or ttl <= 0 or ttl ~= math.floor(ttl) then
     return -2
 end
 
--- 检查新 Registration KEY 是否已存在
-if redis.call('EXISTS', KEYS[1]) == 1 then
+-- 在清理旧注册前检查新注册键和 owner 索引键是否已被占用。
+if redis.call('EXISTS', KEYS[1], KEYS[3]) > 0 then
     return -1
 end
 
@@ -27,15 +28,22 @@ end
 local old_registration_key = redis.call('GET', KEYS[2])
 
 if old_registration_key then
+    -- owner 索引和挑战状态均使用注册 ID 的十六进制摘要。
+    local old_hash = string.match(old_registration_key, '^flowloom:agent:registration:([0-9a-f]+)$')
+    if old_hash and #old_hash == 64 then
+        redis.call('DEL', 'flowloom:agent:registration:owner:' .. old_hash,
+            'flowloom:agent:registration:challenge:' .. old_hash)
+    end
     redis.call('DEL', old_registration_key)
 end
-
-redis.call('DEL', KEYS[2])
 
 -- 写入新的 RegistrationRecord
 redis.call('SET', KEYS[1], ARGV[1], 'EX', ttl)
 
 -- 建立用户与当前 Registration KEY 的映射（同 TTL）
 redis.call('SET', KEYS[2], KEYS[1], 'EX', ttl)
+
+-- 建立注册到所属用户索引键的反向映射（同 TTL）。
+redis.call('SET', KEYS[3], KEYS[2], 'EX', ttl)
 
 return 1
