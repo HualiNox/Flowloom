@@ -4,12 +4,12 @@ import com.mewrix.flowloom.engine.agent.AgentRegistrationCodec.RegistrationCrede
 import com.mewrix.flowloom.engine.agent.AgentRegistrationCodec.RegistrationRecord;
 import com.mewrix.flowloom.engine.agent.dto.response.AgentRegistrationResponse;
 import com.mewrix.flowloom.engine.common.util.TimeUtil;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
  * 前端调用创建接口后获得 {@code registrationId || psk}。Redis 保存以下两项：
  * </p>
  * <ul>
- * <li>{@code flowloom:agent:registration:{sha256(registrationId)}} →
+ * <li>{@code flowloom:agent:registration:{hex(sha256(registrationId))}} →
  * {@link RegistrationRecord}</li>
  * <li>{@code flowloom:agent:registration:user:{userId}} → 上述 Registration
  * KEY</li>
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AgentService {
 
-    private final RedisTemplate<byte[], byte[]> redisTemplate;
+    private final RedisTemplate<String, byte[]> redisTemplate;
 
     private static final String HASH_ALGORITHM = "SHA-256";
 
@@ -65,14 +65,14 @@ public class AgentService {
      * @throws IllegalStateException 注册有效期不合法或达到尝试上限
      */
     public AgentRegistrationResponse createRegistration(UUID userId) {
-        byte[] userKey = registrationUserKey(userId);
-        // Lua 通过 tonumber 读取 TTL，二进制模板需传入十进制字符串的字节。
+        String userKey = registrationUserKey(userId);
+        // Lua 脚本参数采用值序列化器，TTL 以十进制字符串的字节传入。
         byte[] ttlArg = String.valueOf(REGISTRATION_TTL_SECONDS).getBytes(StandardCharsets.UTF_8);
 
         for (int attempt = 0; attempt < 3; attempt++) {
             byte[] registrationId = AgentRegistrationCodec.generateRegistrationId();
             byte[] psk = AgentRegistrationCodec.generatePsk();
-            byte[] registrationKey = registrationKey(registrationId);
+            String registrationKey = registrationKey(registrationId);
             byte[] registration = new RegistrationRecord(userId, psk).toBytes();
 
             Long result = redisTemplate.execute(
@@ -99,25 +99,18 @@ public class AgentService {
         throw new IllegalStateException("Failed to create agent registration after 3 attempts");
     }
 
-    /**
-     * {@code flowloom:agent:registration:{sha256(registrationId)}}（前缀 UTF-8 +
-     * 哈希二进制）。
-     */
-    private static byte[] registrationKey(byte[] registrationId) {
+    /** 注册键由固定前缀和注册 ID 的 SHA-256 小写十六进制摘要拼接而成。 */
+    private static String registrationKey(byte[] registrationId) {
         try {
             byte[] hash = MessageDigest.getInstance(HASH_ALGORITHM).digest(registrationId);
-            byte[] prefix = REGISTRATION_KEY_PREFIX.getBytes(StandardCharsets.UTF_8);
-            return ByteBuffer.allocate(prefix.length + hash.length)
-                    .put(prefix)
-                    .put(hash)
-                    .array();
+            return REGISTRATION_KEY_PREFIX + HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Failed to hash registration ID", e);
         }
     }
 
     /** {@code flowloom:agent:registration:user:{userId}}，用于保证每用户仅一个挂起注册。 */
-    private static byte[] registrationUserKey(UUID userId) {
-        return (REGISTRATION_USER_KEY_PREFIX + userId).getBytes(StandardCharsets.UTF_8);
+    private static String registrationUserKey(UUID userId) {
+        return REGISTRATION_USER_KEY_PREFIX + userId;
     }
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
  * <p>
  * 客户端凭证 {@link RegistrationCredential} 为 {@code registrationId (8) || psk (16)}。
  * Redis 中的 {@link RegistrationRecord} 为
- * {@code userId (16) || psk (16)}，以 {@code sha256(registrationId)} 为 key 查找。
+ * {@code userId (16) || psk (16)}，注册键的后缀为注册 ID 的 SHA-256 十六进制摘要。
  * </p>
  */
 public final class AgentRegistrationCodec {

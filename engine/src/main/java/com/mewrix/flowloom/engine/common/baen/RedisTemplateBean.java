@@ -6,23 +6,23 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
 
-/** 提供读写原始字节的 Redis 模板。 */
+/** 提供使用字符串键与二进制值的 Redis 模板。 */
 @Component
 public class RedisTemplateBean {
 
     /**
-     * 按原样传递 Redis 键、值和 Lua 脚本参数，保留注册键中的二进制哈希及定长记录布局。
+     * 将 Redis 键编码为 UTF-8，按原样传递值与 Lua 脚本参数的字节。
      *
      * @param factory Redis 连接工厂
-     * @return 键和值均采用字节数组序列化的模板
+     * @return 使用 UTF-8 字符串键和原始字节值的模板
      */
     @Bean
-    public RedisTemplate<byte[], byte[]> binaryRedisTemplate(
+    public RedisTemplate<String, byte[]> binaryRedisTemplate(
             RedisConnectionFactory factory) {
-        RedisTemplate<byte[], byte[]> template = new RedisTemplate<>();
+        RedisTemplate<String, byte[]> template = new RedisTemplate<>();
 
         template.setConnectionFactory(factory);
-        template.setKeySerializer(RedisSerializer.byteArray());
+        template.setKeySerializer(RedisSerializer.string());
         template.setValueSerializer(RedisSerializer.byteArray());
 
         template.afterPropertiesSet();

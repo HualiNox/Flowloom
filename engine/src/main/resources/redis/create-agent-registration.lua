@@ -1,7 +1,7 @@
 -- Create Agent Registration 脚本
 -- 同一用户同一时刻仅允许一个挂起的 registrationId；新建时原子替换旧注册。
 --
--- KEYS[1] = Registration KEY          flowloom:agent:registration:{sha256(registrationId)}
+-- KEYS[1] = Registration KEY          flowloom:agent:registration:{hex(sha256(registrationId))}
 -- KEYS[2] = User → Registration KEY   flowloom:agent:registration:user:{userId}
 -- ARGV[1] = RegistrationRecord 字节   userId (16) || psk (16)
 -- ARGV[2] = TTL（秒，十进制字符串）
@@ -23,7 +23,7 @@ if redis.call('EXISTS', KEYS[1]) == 1 then
     return -1
 end
 
--- 清理当前用户原有的挂起注册（保证同一时间只有一个 registrationId）
+-- 按映射中保存的原始键删除旧注册，兼容历史二进制键。
 local old_registration_key = redis.call('GET', KEYS[2])
 
 if old_registration_key then
