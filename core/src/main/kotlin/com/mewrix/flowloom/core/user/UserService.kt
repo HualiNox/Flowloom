@@ -1,9 +1,13 @@
 package com.mewrix.flowloom.core.user
 
+import com.mewrix.flowloom.core.auth.dto.request.ResetAdminAccountRequest
+import com.mewrix.flowloom.core.common.Result
 import com.mewrix.flowloom.core.common.service.PasswordHasher
 import com.mewrix.flowloom.core.storage.file.FileService
 import com.mewrix.flowloom.core.storage.file.loadFromJson
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.io.IOException
 import java.nio.file.Path
 import java.security.SecureRandom
 import java.util.Base64
@@ -25,8 +29,13 @@ class UserService(
         private const val ADMIN_JSON_PATH = "security/admin.json"
         private const val INITIAL_PASSWORD_PATH = "secrets/initialAdminPassword"
         private const val INITIAL_PASSWORD_BYTES = 24
+        private const val MIN_USERNAME_LENGTH = 3
+        private const val MAX_USERNAME_LENGTH = 32
+        private const val MIN_PASSWORD_LENGTH = 6
+        private const val MAX_PASSWORD_LENGTH = 128
     }
 
+    private val log = LoggerFactory.getLogger(UserService::class.java)
     private val secureRandom = SecureRandom()
 
     /**
@@ -40,6 +49,7 @@ class UserService(
      *
      * @return 新建的账户信息；admin.json 已存在、没有新建账户时返回 null
      */
+    @Synchronized
     fun createAdminAccountIfMissing(): CreatedAdminAccount? {
         if (fileService.exists(ADMIN_JSON_PATH)) {
             return null
@@ -60,6 +70,57 @@ class UserService(
             username = ADMIN_USERNAME,
             passwordFile = fileService.getAbsolutePath(INITIAL_PASSWORD_PATH)
         )
+    }
+
+    /**
+     * 串行校验当前密码并写入新的用户名和密码哈希，确保并发请求依次校验最新凭据。
+     * 账户文件写入成功后再清理初始密码文件。
+     */
+    @Synchronized
+    fun resetAdminAccount(req: ResetAdminAccountRequest): Result<Unit> {
+        if (req.confirmPassword != req.newPassword) {
+            return Result.error(UserErrorCode.PASSWORDS_DO_NOT_MATCH)
+        }
+
+        if (req.username.trim() != req.username || req.username.any { it.isISOControl() }) {
+            return Result.error(UserErrorCode.INVALID_USERNAME_CHARACTERS)
+        }
+
+        if (req.username.length !in MIN_USERNAME_LENGTH..MAX_USERNAME_LENGTH) {
+            return Result.error(
+                UserErrorCode.INVALID_USERNAME_LENGTH,
+                MIN_USERNAME_LENGTH,
+                MAX_USERNAME_LENGTH
+            )
+        }
+        if (req.newPassword.length !in MIN_PASSWORD_LENGTH..MAX_PASSWORD_LENGTH) {
+            return Result.error(
+                UserErrorCode.INVALID_PASSWORD_LENGTH,
+                MIN_PASSWORD_LENGTH,
+                MAX_PASSWORD_LENGTH
+            )
+        }
+
+        val admin = fileService.loadFromJson<User>(ADMIN_JSON_PATH)
+        if (admin == null || !passwordHasher.matchesHash(req.oldPassword, admin.password)) {
+            return Result.error(UserErrorCode.INVALID_OLD_PASSWORD)
+        }
+        if (req.oldPassword == req.newPassword) {
+            return Result.error(UserErrorCode.PASSWORD_UNCHANGED)
+        }
+
+        fileService.saveToJson(
+            ADMIN_JSON_PATH,
+            User(username = req.username, password = passwordHasher.hashPassword(req.newPassword))
+        )
+
+        // 密码已经更新，清理失败时仍按成功处理，由调用方撤销会话。
+        try {
+            fileService.delete(INITIAL_PASSWORD_PATH)
+        } catch (ex: IOException) {
+            log.warn("Could not remove the obsolete initial administrator password file", ex)
+        }
+        return Result.success()
     }
 
     /**

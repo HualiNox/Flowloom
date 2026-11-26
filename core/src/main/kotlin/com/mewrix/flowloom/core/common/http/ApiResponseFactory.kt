@@ -1,5 +1,6 @@
 package com.mewrix.flowloom.core.common.http
 
+import com.mewrix.flowloom.core.common.Result
 import com.mewrix.flowloom.core.common.service.I18nService
 import org.springframework.stereotype.Component
 
@@ -20,6 +21,14 @@ class ApiResponseFactory(
             code = errorCode.getCode(),
             message = i18nService.getMessage(errorCode, *args),
             data = data
+        )
+    }
+
+    fun <T> fromResult(result: Result<T>): ApiResponse<T> {
+        return ApiResponse(
+            code = result.errorCode.getCode(),
+            message = i18nService.getMessage(result.errorCode, *result.args),
+            data = result.data
         )
     }
 }

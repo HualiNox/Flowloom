@@ -1,4 +1,4 @@
-package com.mewrix.flowloom.core.auth.dto
+package com.mewrix.flowloom.core.auth.dto.request
 
 class LoginRequest(
     val username: String,
