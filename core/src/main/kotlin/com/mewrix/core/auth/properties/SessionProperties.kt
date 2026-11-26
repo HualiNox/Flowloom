@@ -5,9 +5,9 @@ import java.time.Duration
 
 @ConfigurationProperties(prefix = "flowloom.session")
 data class SessionProperties(
-    /** 空闲超时：超过这么久没有请求，会话失效 */
+    /** 会话有效期，从创建或最近一次实际续期时算起。 */
     val timeout: Duration,
-    /** 滑动续期的最小间隔：距离上次续期不足这个时间的请求不会更新过期时间，减少写入 */
+    /** 距离创建或最近一次续期不足此间隔时，校验通过也沿用原过期时间。 */
     val minRefreshInterval: Duration,
     /** 保存会话 ID 的 Cookie 名称 */
     val cookieName: String = "FLOWLOOM_SESSION",

@@ -9,6 +9,7 @@ import java.time.Instant
  */
 data class Session(
     val createdAt: Instant,
+    /** 创建或最近一次续期的时间。校验通过但未续期时保留原值。 */
     val lastAccessedAt: Instant,
     val expiredAt: Instant,
 ) {
@@ -18,7 +19,7 @@ data class Session(
     fun shouldRefresh(minRefreshInterval: Duration, now: Instant = Instant.now()): Boolean =
         Duration.between(lastAccessedAt, now) >= minRefreshInterval
 
-    /** 记录一次访问，并把过期时间顺延到「现在 + timeout」 */
+    /** 记录本次续期，并把过期时间设为当前时间加上 [timeout]。 */
     fun refreshed(timeout: Duration, now: Instant = Instant.now()): Session =
         copy(lastAccessedAt = now, expiredAt = now.plus(timeout))
 

@@ -11,8 +11,8 @@ import java.time.Duration
 /**
  * 会话 Cookie 的读写。目前只支持 Cookie 传递会话 ID。
  *
- * 写入的是“会话 Cookie”（不带 Max-Age）：关闭浏览器后失效；
- * 服务端是否过期由 [SessionService] 的 timeout 决定。
+ * 写入的会话 Cookie 不设置 Max-Age，由浏览器管理其生命周期。
+ * 服务端会话的过期与续期由 [SessionService] 管理。
  */
 @Component
 class SessionCookieManager(
