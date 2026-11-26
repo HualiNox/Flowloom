@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: Flowloom Core
+
+flowloom:
+  session:
+    timeout: 30m
+    min-refresh-interval: 5m
