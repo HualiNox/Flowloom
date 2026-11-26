@@ -32,7 +32,7 @@ class UserService(
     /**
      * 如果 security/admin.json 不存在，就创建 admin 账户：
      * 1. 生成随机初始密码
-     * 2. 明文写入 secrets/initialAdminPassword（只有当前系统用户能读写）
+     * 2. 明文写入 secrets/initialAdminPassword（在支持 POSIX 权限的文件系统上仅所有者可读写）
      * 3. 把密码的 Argon2id 哈希写入 security/admin.json（不保存明文）
      *
      * 先写密码文件、后写 admin.json：如果中途失败，admin.json 还不存在，
@@ -64,7 +64,7 @@ class UserService(
 
     /**
      * 校验用户名和密码是否匹配 admin.json 里的账户。
-     * 无论用户名对不对，都会执行一次 Argon2 校验，避免通过响应时间猜出用户名是否存在。
+     * 账户文件存在时，先执行 Argon2 校验，再比较用户名，避免因用户名不匹配而跳过哈希校验。
      */
     fun authenticate(username: String, password: String): Boolean {
         val admin = fileService.loadFromJson<User>(ADMIN_JSON_PATH) ?: return false

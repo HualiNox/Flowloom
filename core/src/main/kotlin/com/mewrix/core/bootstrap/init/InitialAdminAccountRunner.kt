@@ -6,7 +6,7 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.stereotype.Component
 
 /**
- * 应用启动完成后，确保管理员账户存在。
+ * 在 Spring Boot 的启动回调中确保管理员账户存在。
  *
  * 只有这次启动新建了 admin 账户时，才会在终端打印提示：用户名，以及保存初始密码的文件路径。
  * 提示里不包含密码本身，避免密码进入日志。admin 账户已存在时什么都不打印。

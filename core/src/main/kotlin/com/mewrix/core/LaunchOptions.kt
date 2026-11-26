@@ -5,8 +5,7 @@ import org.springframework.boot.DefaultApplicationArguments
 import java.nio.file.Path
 
 /**
- * 命令行启动参数。目前只有 --flowloom.launch.home=<目录>，指定 Flowloom 的数据目录（home）。
- * 不传时使用当前目录下的 ./.flowloom。
+ * 命令行启动参数
  */
 class LaunchOptions(
     val homeDir: Path
@@ -32,7 +31,7 @@ class LaunchOptions(
     }
 
     /**
-     * 转成 Spring 默认属性，供 LaunchOptionsProperties 绑定
+     * 将解析结果作为 Spring 默认属性。同名的命令行参数、环境变量或配置文件属性优先。
      */
     fun toMap(): Map<String, Any> = mapOf(HOME_DIR_OPTION to homeDir.toString())
 }

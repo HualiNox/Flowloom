@@ -7,9 +7,7 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * 管理实例信息（instance/instance.json）：实例 ID 和初始化状态。
- *
- * 首次启动时生成实例 ID 并落盘；之后每次启动都沿用文件里的内容。
+ * 管理实例信息
  */
 @Service
 class InstanceService(
@@ -28,7 +26,10 @@ class InstanceService(
     val setupState: SetupState
         get() = instanceConfig.setupState
 
-    /** 更新初始化状态并立即落盘 */
+    /**
+     * 串行处理状态更新，写入成功后才发布新的内存快照。
+     * 写入抛出异常时，读取方仍会看到上一次发布的状态。
+     */
     @Synchronized
     fun updateSetupState(newState: SetupState) {
         if (instanceConfig.setupState == newState) {

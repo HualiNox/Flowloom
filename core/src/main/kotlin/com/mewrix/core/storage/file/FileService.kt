@@ -25,14 +25,19 @@ class FileService(
 ) {
     private val log: Logger = LoggerFactory.getLogger(FileService::class.java)
     private val rootDir: Path = homeDirectoryInitializer.homeDir
+    // 同一进程内按规范化后的目标路径协调读写和删除，锁的范围是单个文件。
     private val pathLocks = ConcurrentHashMap<Path, ReentrantLock>()
 
     /**
-     * 把相对于 home 的路径转成绝对路径
-     * 路径跳出 home 时抛出 IllegalArgumentException
+     * 把相对于 home 的路径转成规范化的绝对路径。
+     * 检查只针对路径文本，不解析符号链接，调用方应传入受信任的内部路径。
      */
     fun getAbsolutePath(path: String): Path = resolveSafePath(path)
 
+    /**
+     * 读取 JSON 文件并反序列化为对象。
+     * 文件不存在时返回 null。
+     */
     fun <T> loadFromJson(path: String, typeRef: TypeReference<T>): T? {
         val target = resolveSafePath(path)
         if (!Files.exists(target)) {
@@ -42,6 +47,7 @@ class FileService(
         val lock = lockFor(target)
         return lock.withLock {
             if (!Files.exists(target)) {
+                // 等待锁期间，另一个线程可能已删除文件。
                 return@withLock null
             }
             Files.newBufferedReader(target, Charsets.UTF_8).use { reader ->
@@ -50,6 +56,10 @@ class FileService(
         }
     }
 
+    /**
+     * 把对象序列化为 JSON 并写入文件，覆盖原有内容。
+     * 写入失败时不会删除原文件。
+     */
     fun <T> saveToJson(path: String, data: T) {
         writeViaTempFile(resolveSafePath(path)) { tempFile ->
             objectMapper
@@ -75,7 +85,8 @@ class FileService(
 
     /**
      * 先把内容写进同目录下的临时文件，写完后再改名覆盖目标文件。
-     * 这样即使写到一半程序崩溃，目标文件要么是旧内容、要么是完整的新内容，不会出现写了一半的文件。
+     * 写入临时文件失败时不会开始替换。替换优先使用原子移动，
+     * 文件系统不支持原子移动时退回普通移动。
      *
      * @param writeContent 接收临时文件路径，负责把内容写进去
      */
@@ -115,11 +126,23 @@ class FileService(
         }
     }
 
+    /**
+     * 检查文件是否存在。
+     *
+     * @param path 相对于 home 的路径
+     * @return 文件存在返回 true，否则返回 false
+     */
     fun exists(path: String): Boolean {
         val target = resolveSafePath(path)
         return Files.exists(target)
     }
 
+    /**
+     * 删除文件或空目录。
+     *
+     * @param path 相对于 home 的路径
+     * @return 文件存在并删除成功返回 true，否则返回 false
+     */
     fun delete(path: String): Boolean {
         val target = resolveSafePath(path)
         val lock = lockFor(target)
@@ -128,6 +151,12 @@ class FileService(
         }
     }
 
+    /**
+     * 把相对于 home 的路径转成规范化的绝对路径。
+     *
+     * @param relativePath 相对于 home 的路径
+     * @return 规范化的绝对路径
+     */
     private fun resolveSafePath(relativePath: String): Path {
         val cleaned = relativePath.trim()
         require(cleaned.isNotEmpty()) {
@@ -147,11 +176,23 @@ class FileService(
         return resolved
     }
 
+    /**
+     * 获取指定路径的锁对象，确保同一进程内对同一文件的读写和删除操作串行化。
+     *
+     * @param target 目标文件的绝对路径
+     * @return 锁对象
+     */
     private fun lockFor(target: Path): ReentrantLock =
         pathLocks.computeIfAbsent(target) {
             ReentrantLock()
         }
 
+    /**
+     * 尝试原子移动文件，失败时退回普通移动。
+     *
+     * @param source 源文件路径
+     * @param target 目标文件路径
+     */
     private fun moveReplacingTarget(source: Path, target: Path) {
         try {
             Files.move(

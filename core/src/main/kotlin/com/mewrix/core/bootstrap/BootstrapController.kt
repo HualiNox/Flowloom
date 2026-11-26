@@ -14,6 +14,9 @@ class BootstrapController(
     private val bootstrapService: BootstrapService
 ) {
 
+    /**
+     * 获取 Flowloom 实例的状态。
+     */
     @GetMapping("/status")
     fun getBootstrapStatus(): ApiResponse<GetStatusResponse> =
         apiResponseFactory.success(bootstrapService.instanceStatus())
