@@ -30,8 +30,10 @@ class AuthFilter(
     }
 
     /** 白名单精确匹配（方法 + 路径），匹配不上一律走校验，宁严勿松 */
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean =
-        "${request.method} ${request.requestURI}" in PUBLIC_ENDPOINTS
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        val path = request.requestURI.removePrefix(request.contextPath)
+        return "${request.method} $path" in PUBLIC_ENDPOINTS
+    }
 
     override fun doFilterInternal(
         request: HttpServletRequest,
