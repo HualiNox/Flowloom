@@ -23,18 +23,18 @@ class BootstrapFilter(
 ) : OncePerRequestFilter() {
     companion object {
         /**
-         * 与实例状态无关的接口。账户重置在配置期间用于设置初始凭据，之后仍可修改密码。
-         * 状态查询、退出和账户重置仍要求管理员会话。
+         * 与实例状态无关的接口。状态查询和退出仍要求管理员会话。
          */
         private val UNFILTERED_ENDPOINTS: Set<String> = setOf(
             "${HttpMethod.GET.name()} /api/v1/bootstrap/status",
             "${HttpMethod.POST.name()} /api/v1/auth/login",
-            "${HttpMethod.POST.name()} /api/v1/auth/logout",
-            "${HttpMethod.POST.name()} /api/v1/auth/account/reset"
+            "${HttpMethod.POST.name()} /api/v1/auth/logout"
         )
 
         /** 仅在实例未初始化时开放的配置接口。 */
-        private val BOOTSTRAP_ENDPOINTS: Set<String> = setOf()
+        private val BOOTSTRAP_ENDPOINTS = setOf(
+            "${HttpMethod.POST.name()} /api/v1/bootstrap/admin/account"
+        )
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
