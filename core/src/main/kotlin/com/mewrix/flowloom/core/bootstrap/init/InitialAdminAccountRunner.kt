@@ -1,5 +1,6 @@
 package com.mewrix.flowloom.core.bootstrap.init
 
+import com.mewrix.flowloom.core.bootstrap.BootstrapService
 import com.mewrix.flowloom.core.user.UserService
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -13,11 +14,16 @@ import org.springframework.stereotype.Component
  */
 @Component
 class InitialAdminAccountRunner(
-    private val userService: UserService
+    private val userService: UserService,
+    private val bootstrapService: BootstrapService
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
-        val createdAccount = userService.createAdminAccountIfMissing() ?: return
+        val createdAccount = userService.createAdminAccountIfMissing()
+        bootstrapService.refreshInstanceState()
+        if (createdAccount == null) {
+            return
+        }
 
         val border = "*".repeat(80)
         println(

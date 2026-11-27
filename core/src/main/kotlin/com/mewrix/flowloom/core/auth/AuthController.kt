@@ -2,6 +2,7 @@ package com.mewrix.flowloom.core.auth
 
 import com.mewrix.flowloom.core.auth.dto.request.LoginRequest
 import com.mewrix.flowloom.core.auth.dto.request.ResetAdminAccountRequest
+import com.mewrix.flowloom.core.bootstrap.BootstrapService
 import com.mewrix.flowloom.core.common.http.ApiResponse
 import com.mewrix.flowloom.core.common.http.ApiResponseFactory
 import com.mewrix.flowloom.core.common.http.CommonErrorCode
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
     private val userService: UserService,
+    private val bootstrapService: BootstrapService,
     private val sessionService: SessionService,
     private val sessionCookieManager: SessionCookieManager,
     private val apiResponseFactory: ApiResponseFactory
@@ -73,6 +75,7 @@ class AuthController(
 
         sessionService.removeAllSessions()
         sessionCookieManager.clear(response)
+        bootstrapService.refreshInstanceState()
         return ResponseEntity.ok(apiResponseFactory.fromResult(result))
     }
 }

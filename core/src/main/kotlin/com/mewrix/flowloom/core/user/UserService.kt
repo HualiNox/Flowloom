@@ -111,7 +111,11 @@ class UserService(
 
         fileService.saveToJson(
             ADMIN_JSON_PATH,
-            User(username = req.username, password = passwordHasher.hashPassword(req.newPassword))
+            User(
+                username = req.username,
+                password = passwordHasher.hashPassword(req.newPassword),
+                credentialsReset = true
+            )
         )
 
         // 密码已经更新，清理失败时仍按成功处理，由调用方撤销会话。
@@ -122,6 +126,10 @@ class UserService(
         }
         return Result.success()
     }
+
+    /** 缺少管理员或凭据重置标记时，管理员配置仍待完成。 */
+    fun adminCredentialsReset(): Boolean =
+        fileService.loadFromJson<User>(ADMIN_JSON_PATH)?.credentialsReset == true
 
     /**
      * 校验用户名和密码是否匹配 admin.json 里的账户。
